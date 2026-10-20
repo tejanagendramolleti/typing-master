@@ -39,6 +39,8 @@ app:
     mode: console
     from: no-reply@examtyper.test
   payments:
+    # The tests that need a gateway override this. The default is off, so
+    # a test that forgets to say what it wants gets the safe answer.
     mode: disabled
   ai:
     enabled: false

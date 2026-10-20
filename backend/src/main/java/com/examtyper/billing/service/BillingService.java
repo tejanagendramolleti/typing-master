@@ -383,10 +383,19 @@ public class BillingService {
         order.setAdminNote(note);
         order.setReviewedBy(adminUserId);
         order.setReviewedAt(Instant.now());
+        orderRepository.save(order);
+
+        // The activation comes first, and the status is changed afterwards.
+        // The activation checks whether the order has already been paid, and
+        // APPROVED counts as paid — so setting the status first would make
+        // the activation return early without making the subscription, and
+        // the administrator's approval would silently do nothing.
+        Subscription subscription = activateOrder(order.getId(), order.getManualRef(), adminUserId);
+
         order.setStatus("APPROVED");
         orderRepository.save(order);
 
-        return activateOrder(order.getId(), order.getManualRef(), adminUserId);
+        return subscription;
     }
 
     /**
