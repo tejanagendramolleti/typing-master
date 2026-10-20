@@ -180,3 +180,70 @@ Testcontainers.
 **Why.** The application uses PostgreSQL-specific types and features (sequences,
 `TIMESTAMPTZ`, partial indexes). Testing against H2 would let real bugs through
 and would still not test the Flyway migrations against the real engine.
+
+## D18 — The Indic layouts read the passage to decide whether a conjunct needs a halant
+
+**Decision.** The Hindi and Telugu Inscript layouts, and the Kruti Dev
+keystroke layer, receive the passage being typed as part of the typing state.
+They consult it for exactly one decision: whether a halant belongs between
+two consonants. Which consonant a key produces is fixed by a data table and
+never depends on the passage.
+
+**Why.** Unicode encodes a joined pair as `C1` + halant + `C2` and an unjoined
+pair as `C1` + `C2`. The two are indistinguishable without the passage, and
+the reference text is exactly the source of that information. A static table
+of "which consonant pairs join" would have to be right for every possible
+pair, which no table is.
+
+**The constraint that keeps this honest.** The reference is used only to
+decide *whether a joining mark is required*, never *which character a key
+produces*. If the layout could read the next character straight out of the
+passage, the test would measure copying rather than typing and the score
+would be meaningless. The layout still has to know, unaided, which key
+produces क, त, or भ. A candidate who does not know the layout will type
+wrong, and the server will mark them wrong.
+
+**Kruti Dev is different in kind.** Kruti Dev 010 is a font, not a keyboard.
+The same byte draws a consonant in one place and a vowel sign in another,
+and even a perfect run produces bytes that only render inside that font.
+The layer here translates Kruti Dev keystrokes into canonical Unicode, which
+means the output no longer needs the font — at the cost of the layout
+reading the passage more often than the Inscript layouts do. The
+limitations are listed in `KNOWN_ISSUES.md`.
+
+## D19 — Indic character tables are built from code points, not from literals
+
+**Decision.** The Devanagari and Telugu character tables are defined by
+explicit code points, and a test checks every one of them against the
+Unicode name it is supposed to have.
+
+**Why.** Devanagari and Telugu distinguish short and long vowels with
+glyphs that are nearly identical — `े` (U+0947) from `ॆ` (U+0946), `ే`
+(U+0C47) from `ే` (U+0C46). A character written as a literal can be
+silently normalised, autocorrected or mangled by a tool, and the result
+still looks plausible in a diff. Writing `chars(0x0947)` says exactly what
+is meant, and the name-checking test turns the table into something a
+reviewer can verify without a Unicode reference at hand.
+
+This applies to the tests as much as to the layouts. A test that hard-codes
+the wrong literal is worse than no test, because it passes for the wrong
+reason.
+
+## D20 — The vowel key produces a dependent sign when it can attach, and shift forces the independent vowel
+
+**Decision.** In the Inscript layouts, a vowel key produces the dependent
+vowel sign (matra) when a consonant precedes it, and the independent vowel
+letter when it does not. Holding the shift key always produces the
+independent vowel.
+
+**Why.** Typing `क` then the `aa` key must give `का`, not `कअ` — a
+matra is a mark that attaches to the consonant before it, and there is no
+way to know that intent without looking at what precedes. Shift is the
+escape hatch for a standalone vowel in the middle of a word, which is rare
+but real. The alternative — making the matra the shifted variant — reads
+more naturally on a keyboard but gets `क` + `aa` wrong in the common case.
+
+**Note.** The layout still consults the passage when the typed text and the
+passage have drifted apart after a mistake, because the structural rule
+alone cannot tell a matra from an independent vowel in that situation. The
+consultation is bounded to that one decision, exactly as in D18.

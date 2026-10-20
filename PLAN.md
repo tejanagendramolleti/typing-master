@@ -85,44 +85,44 @@ On-screen overlay renders the layout and highlights the expected next key.
 ## 5. Phases
 
 ### Phase 1 — Scaffold, Docker, DB, verify harness
-- [ ] Repo skeleton, `.gitignore`, `.editorconfig`, `.env.example`
-- [ ] Backend Maven project, Spring Boot 3.3.x, Java 21, dependencies
-- [ ] `application.yml` + profiles (dev/test/prod), env-driven
-- [ ] Flyway `V1__init.sql` (full schema + indexes)
-- [ ] `docker-compose.yml` (postgres, backend, frontend) + Dockerfiles
+- [x] Repo skeleton, `.gitignore`, `.editorconfig`, `.env.example`
+- [x] Backend Maven project, Spring Boot 3.3.x, Java 21, dependencies
+- [x] `application.yml` + profiles (dev/test/prod), env-driven
+- [x] Flyway `V1__init.sql` (full schema + indexes)
+- [x] `docker-compose.yml` (postgres, backend, frontend) + Dockerfiles
 - [ ] `scripts/verify.sh` harness (lint, backend test, frontend test, build, e2e) — non-zero on failure
-- [ ] Common: error envelope, request-ID filter, health/actuator
+- [x] Common: error envelope, request-ID filter, health/actuator
 
 ### Phase 2 — Scoring engine + exam profiles
-- [ ] `scoring` package (pure) + `ExamProfile` entity
-- [ ] Flyway seed of 7+ exam profiles
-- [ ] ≥40 table-driven scoring test cases
-- [ ] Server-side verification service
+- [x] `scoring` package (pure) + `ExamProfile` entity
+- [x] Flyway seed of 7+ exam profiles
+- [x] ≥40 table-driven scoring test cases
+- [x] Server-side verification service
 
 ### Phase 3 — Auth, users, roles, security
-- [ ] Register / login / refresh / logout / password reset
-- [ ] JWT access+refresh, BCrypt, role-based access
-- [ ] Rate limiting on auth + submit, CORS via env, secure headers
+- [x] Register / login / refresh / logout / password reset
+- [x] JWT access+refresh, BCrypt, role-based access
+- [~] Rate limiting on auth + submit, CORS via env, secure headers
 - [ ] `MailSender` interface + console implementation
-- [ ] Profile preferences (exam, language, target WPM)
+- [x] Profile preferences (exam, language, target WPM)
 
 ### Phase 4 — Passage bank + attempt lifecycle
-- [ ] `passages` CRUD + selection service
+- [x] `passages` CRUD + selection service
 - [ ] Seed content: 40 EN / 30 HI / 20 TE / 15 alphanumeric
 - [ ] NFC + charset validation test over all seeded passages
-- [ ] Attempt start/submit/resume, timing events, anti-cheat log
+- [x] Attempt start/submit/resume, timing events, anti-cheat log
 
 ### Phase 5 — Frontend shell + design system + English flow
-- [ ] Vite + React + TS + Tailwind + Router + TanStack Query
+- [~] Vite + React + TS + Tailwind + Router + TanStack Query
 - [ ] Design system (one accent, typography, spacing, light/dark)
 - [ ] Landing, catalog, pricing, FAQ, SEO pages
 - [ ] Test screen (passage, timer, live WPM, exam mode)
 - [ ] Result page (metrics, word diff, chart, error breakdown)
 
 ### Phase 6 — Keyboard layouts + on-screen keyboard
-- [ ] `en-qwerty`, `hi-inscript` (full), `te-inscript`, `hi-krutidev` (best-effort + documented)
+- [x] `en-qwerty`, `hi-inscript` (full), `te-inscript`, `hi-krutidev` (best-effort + documented)
 - [ ] On-screen keyboard overlay with next-key hint
-- [ ] ≥30 mapping tests per layout
+- [x] ≥30 mapping tests per layout
 
 ### Phase 7 — Results, analytics, drills, PDF, certificates
 - [ ] WPM/accuracy trends, weak-key + weak-word analysis, missed words, time-of-day
