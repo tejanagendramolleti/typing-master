@@ -1,0 +1,60 @@
+# The profile the integration tests run under.
+#
+# The datasource is supplied by Testcontainers through a dynamic property
+# source, so nothing here points at a real database. Everything else is
+# chosen to keep the tests quiet and deterministic.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    default-property-inclusion: non_null
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 4
+  main:
+    banner-mode: off
+
+app:
+  env: test
+  jwt:
+    # A test-only secret. It is long enough for the service to accept it and
+    # it is not used anywhere outside the tests.
+    secret: test-only-signing-secret-that-is-long-enough-for-hmac-sha256
+    access-ttl-minutes: 15
+    refresh-ttl-days: 7
+  mail:
+    # The console transport writes the message to the log, so the tests need
+    # no SMTP server and no credentials.
+    mode: console
+    from: no-reply@examtyper.test
+  payments:
+    mode: disabled
+  ai:
+    enabled: false
+  cors:
+    allowed-origins: http://localhost:3000
+  frontend:
+    base-url: http://localhost:3000
+    api-base-url: http://localhost:8080
+
+logging:
+  level:
+    root: WARN
+    com.examtyper: INFO
+    org.flywaydb: WARN
+    org.hibernate: WARN
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{requestId:--}] %logger{36} - %msg%n"

@@ -170,3 +170,46 @@ hint.
   uses Vite 6, which left two copies of Vite in the tree and made the
   `vitest.config.ts` types incompatible with the app's own Vite types. On
   Vitest 3 the dependency is deduplicated.
+
+## Phase 4 (continued) — The seeded passage content
+
+**Status: complete**
+
+- **120 original passages**, all written for this project. Nothing is copied
+  from an exam paper, a news article or a book.
+  - 48 English, across easy, medium and hard
+  - 36 Hindi
+  - 21 Telugu
+  - 15 alphanumeric, in the four-digit-group style the DEO tests use
+- The passages live in plain UTF-8 files under `scripts/data/`, and
+  `scripts/tools/PassageSqlGenerator.java` turns them into the Flyway
+  migrations. The generator computes the character and word counts using
+  the same `TextNormalizer` the application uses, so the database and the
+  entity can never disagree about them.
+- Writing the text in data files rather than inside SQL literals matters
+  for the Indic scripts: a Devanagari or Telugu character in a SQL string
+  can be mangled without anyone noticing, and the mangled version still
+  looks plausible in a diff.
+- `PassageSeedValidationTest` runs against a real PostgreSQL through
+  Testcontainers and checks that the passages cover every language and
+  every difficulty, that there are at least as many as the brief asks for,
+  that every one is NFC-normalised and free of the replacement character,
+  that the stored counts match the content, that the character ranges are
+  the expected ones for each script, and that every passage says where it
+  came from. **12 tests, all passing.**
+
+**Three real bugs were found while wiring up the integration tests:**
+1. `AppProperties` was never registered as a bean, so the application could
+   not start at all. It had never been booted in a Spring context, because
+   only the pure scoring module had been tested. Now
+   `@EnableConfigurationProperties(AppProperties.class)` is on the
+   application class.
+2. The `LoggingMailSender` bean activates only when `app.mail.mode` is
+   `console`, but the test profile set it to `log`, so the mail transport
+   was missing and the context failed to load. The canonical value is
+   `console` everywhere now.
+3. Testcontainers 1.20.3 could not talk to the Docker Desktop daemon on
+   this machine, because its bundled docker-java is too old for the
+   29.6.1 API. Upgraded to Testcontainers 1.21.4, which works.
+
+**77 backend tests pass in total** (65 scoring, 12 passage validation).

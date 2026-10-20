@@ -103,13 +103,13 @@ On-screen overlay renders the layout and highlights the expected next key.
 - [x] Register / login / refresh / logout / password reset
 - [x] JWT access+refresh, BCrypt, role-based access
 - [~] Rate limiting on auth + submit, CORS via env, secure headers
-- [ ] `MailSender` interface + console implementation
+- [x] `MailSender` interface + console implementation
 - [x] Profile preferences (exam, language, target WPM)
 
 ### Phase 4 — Passage bank + attempt lifecycle
 - [x] `passages` CRUD + selection service
-- [ ] Seed content: 40 EN / 30 HI / 20 TE / 15 alphanumeric
-- [ ] NFC + charset validation test over all seeded passages
+- [x] Seed content: 40 EN / 30 HI / 20 TE / 15 alphanumeric
+- [x] NFC + charset validation test over all seeded passages
 - [x] Attempt start/submit/resume, timing events, anti-cheat log
 
 ### Phase 5 — Frontend shell + design system + English flow
