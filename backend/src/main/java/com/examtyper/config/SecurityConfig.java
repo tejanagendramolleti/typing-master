@@ -3,6 +3,7 @@ package com.examtyper.config;
 import com.examtyper.common.config.AppProperties;
 import com.examtyper.common.error.ErrorCode;
 import com.examtyper.common.error.RequestIdFilter;
+import com.examtyper.common.web.RateLimitingFilter;
 import com.examtyper.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,10 +37,14 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
     private final AppProperties appProperties;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, AppProperties appProperties) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                           RateLimitingFilter rateLimitingFilter,
+                           AppProperties appProperties) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
         this.appProperties = appProperties;
     }
 
@@ -89,7 +94,11 @@ public class SecurityConfig {
                                 writeError(response, request, HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHENTICATED))
                         .accessDeniedHandler((request, response, ex) ->
                                 writeError(response, request, HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED)))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // The rate limiter runs after the authentication filter, so
+                // it can count a signed-in candidate by their user rather
+                // than by their address.
+                .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

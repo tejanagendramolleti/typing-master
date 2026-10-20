@@ -51,19 +51,25 @@ public class AttemptService {
     private final PassageRepository passageRepository;
     private final ScoringEngine scoringEngine;
     private final ObjectMapper objectMapper;
+    private final QuotaService quotaService;
+    private final com.examtyper.user.UserRepository userRepository;
 
     public AttemptService(AttemptRepository attemptRepository,
                           AttemptEventRepository eventRepository,
                           ExamProfileService examProfileService,
                           PassageRepository passageRepository,
                           ScoringEngine scoringEngine,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          QuotaService quotaService,
+                          com.examtyper.user.UserRepository userRepository) {
         this.attemptRepository = attemptRepository;
         this.eventRepository = eventRepository;
         this.examProfileService = examProfileService;
         this.passageRepository = passageRepository;
         this.scoringEngine = scoringEngine;
         this.objectMapper = objectMapper;
+        this.quotaService = quotaService;
+        this.userRepository = userRepository;
     }
 
     // -----------------------------------------------------------------
@@ -72,6 +78,13 @@ public class AttemptService {
 
     @Transactional
     public AttemptResponse start(Long userId, StartAttemptRequest request) {
+        // The daily allowance is checked here, on the server, before any
+        // passage is picked. The interface shows a prompt, but this is what
+        // actually stops the fourth test.
+        com.examtyper.user.User user = userRepository.findById(userId)
+                .orElseThrow(() -> NotFoundException.of("User", userId));
+        quotaService.requireQuota(user);
+
         ExamProfile profile = examProfileService.findByCode(request.examCode());
 
         Passage passage = request.passageId() != null
