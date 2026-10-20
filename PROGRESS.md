@@ -213,3 +213,50 @@ hint.
    29.6.1 API. Upgraded to Testcontainers 1.21.4, which works.
 
 **77 backend tests pass in total** (65 scoring, 12 passage validation).
+
+## Phase 5 — The frontend shell, the design system and the public pages
+
+**Status: complete**
+
+- The application shell: Vite + React 18 + TypeScript + Tailwind + Router +
+  TanStack Query, with the routes for every page.
+- The design system, in `src/styles/index.css`:
+  - **One accent colour**, the indigo-leaning violet in the Tailwind config.
+    Everything else is a neutral, so the numbers stay the loudest thing on
+    the screen.
+  - The three result states — good, warn, bad — are reserved for the score
+    and are never used for decoration.
+  - A visible focus ring on every interactive element, because the browser
+    default disappears against the dark surfaces.
+  - `prefers-reduced-motion` is honoured.
+- The public pages: the landing page, the exam catalogue with a language
+  filter and a search, the detail page for one exam with its rules, the
+  pricing page with a waitlist capture when payments are off, the FAQ, the
+  sign-in and registration pages, the password reset, and the certificate
+  verification page.
+- The typing screen:
+  - The passage at the top with the candidate's progress shown in place.
+  - The typing area below it, with autocorrect, spellcheck and
+    autocapitalise all switched off.
+  - The clock, the live speed and the submit button in the top bar.
+  - A full-screen exam mode.
+  - Paste, drop, copy and the context menu are blocked, and each attempt is
+    recorded against the test. Leaving the tab is recorded too.
+  - The test submits itself when the time runs out.
+- The result page: the verdict, the six headline numbers, the word-by-word
+  diff with the error types colour-coded, the error breakdown as a chart,
+  and the keystroke counts.
+- The dashboard, the analytics page with the speed and accuracy trends, the
+  weak-key chart, the weak words and the performance by hour of the day.
+- The profile page, the admin panel and the certificate verification page.
+- The API client refreshes an expired access token once, and shares a
+  single refresh between the callers that arrive while one is running — a
+  page that fires five requests must not send five refreshes, because the
+  rotation would invalidate four of the new tokens.
+
+**The lint configuration was missing entirely**, so `npm run lint` had
+never run. It is now an ESLint 9 flat config with the React and TypeScript
+rules, and the whole tree passes with `--max-warnings=0`.
+
+497 frontend tests pass. The type check is clean and the production build
+succeeds.

@@ -113,15 +113,15 @@ On-screen overlay renders the layout and highlights the expected next key.
 - [x] Attempt start/submit/resume, timing events, anti-cheat log
 
 ### Phase 5 — Frontend shell + design system + English flow
-- [~] Vite + React + TS + Tailwind + Router + TanStack Query
-- [ ] Design system (one accent, typography, spacing, light/dark)
-- [ ] Landing, catalog, pricing, FAQ, SEO pages
-- [ ] Test screen (passage, timer, live WPM, exam mode)
-- [ ] Result page (metrics, word diff, chart, error breakdown)
+- [x] Vite + React + TS + Tailwind + Router + TanStack Query
+- [x] Design system (one accent, typography, spacing, light/dark)
+- [x] Landing, catalog, pricing, FAQ, SEO pages
+- [x] Test screen (passage, timer, live WPM, exam mode)
+- [x] Result page (metrics, word diff, chart, error breakdown)
 
 ### Phase 6 — Keyboard layouts + on-screen keyboard
 - [x] `en-qwerty`, `hi-inscript` (full), `te-inscript`, `hi-krutidev` (best-effort + documented)
-- [ ] On-screen keyboard overlay with next-key hint
+- [x] On-screen keyboard overlay with next-key hint
 - [x] ≥30 mapping tests per layout
 
 ### Phase 7 — Results, analytics, drills, PDF, certificates

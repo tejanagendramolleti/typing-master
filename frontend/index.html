@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#4f46e5" />
+    <title>ExamTyper — Typing practice for Indian government exams</title>
+    <meta
+      name="description"
+      content="Practice typing for SSC CHSL, SSC CGL, High Court typist, RRB, stenographer and DEO exams. Accurate scoring, real exam passages, and analytics that show where you are slow."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Apply the saved theme before the first paint, so a dark-mode user
+      // never sees a flash of the light theme.
+      (function () {
+        try {
+          var saved = localStorage.getItem('examtyper.theme')
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          if (saved === 'dark' || (!saved && prefersDark)) {
+            document.documentElement.classList.add('dark')
+          }
+        } catch (e) {
+          /* Private browsing: fall back to the light theme. */
+        }
+      })()
+    </script>
+  </head>
+  <body class="h-full bg-ink-50 text-ink-900 antialiased dark:bg-surface-dark dark:text-ink-100">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
