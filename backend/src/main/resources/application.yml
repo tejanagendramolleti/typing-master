@@ -1,0 +1,127 @@
+spring:
+  application:
+    name: examtyper
+  profiles:
+    active: ${APP_ENV:dev}
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:examtyper}
+    username: ${POSTGRES_USER:examtyper}
+    password: ${POSTGRES_PASSWORD:examtyper}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        format_sql: false
+    show-sql: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+    mime-types: application/json,text/html,text/css,application/javascript
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.examtyper: INFO
+    org.hibernate.SQL: WARN
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{requestId:-no-req}] %-40.40logger{39} : %m%n"
+
+app:
+  env: ${APP_ENV:dev}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-long-random-string-at-least-32-chars}
+    access-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:30}
+    refresh-ttl-days: ${JWT_REFRESH_TTL_DAYS:30}
+  mail:
+    mode: ${MAIL_MODE:console}
+    from: ${MAIL_FROM:no-reply@examtyper.local}
+  payments:
+    mode: ${PAYMENTS_MODE:mock}          # mock | manual | disabled
+  ai:
+    enabled: ${AI_ENABLED:false}
+  seed:
+    demo-users: ${SEED_DEMO_USERS:true}
+    admin-email: ${ADMIN_EMAIL:admin@examtyper.local}
+    admin-password: ${ADMIN_PASSWORD:Admin@12345}
+    demo-free-email: ${DEMO_FREE_EMAIL:free@examtyper.local}
+    demo-free-password: ${DEMO_FREE_PASSWORD:Free@12345}
+    demo-pro-email: ${DEMO_PRO_EMAIL:pro@examtyper.local}
+    demo-pro-password: ${DEMO_PRO_PASSWORD:Pro@12345}
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+    api-base-url: ${API_BASE_URL:http://localhost:8080}
