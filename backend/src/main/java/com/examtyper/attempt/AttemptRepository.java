@@ -48,6 +48,20 @@ public interface AttemptRepository extends JpaRepository<Attempt, Long> {
     @Query("select count(a) from Attempt a where a.submittedAt is not null")
     long countSubmitted();
 
+    /**
+     * The finished attempts for an exam, for the leaderboard.
+     *
+     * <p>Both a submitted attempt and an automatically submitted one count:
+     * a candidate whose time ran out has a real result.
+     */
+    @Query("select a from Attempt a where a.examCode = :examCode "
+            + "and a.status in (com.examtyper.attempt.AttemptStatus.SUBMITTED, "
+            + "com.examtyper.attempt.AttemptStatus.AUTO_SUBMITTED) "
+            + "and a.submittedAt is not null "
+            + "and (:since is null or a.submittedAt >= :since)")
+    List<Attempt> findFinishedForExam(@Param("examCode") String examCode,
+                                      @Param("since") Instant since);
+
     @Query("select count(a) from Attempt a where a.submittedAt >= :since")
     long countSubmittedSince(@Param("since") Instant since);
 }

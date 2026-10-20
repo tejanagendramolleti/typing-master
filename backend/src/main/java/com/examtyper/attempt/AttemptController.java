@@ -2,6 +2,8 @@ package com.examtyper.attempt;
 
 import com.examtyper.attempt.dto.AttemptResponse;
 import com.examtyper.attempt.dto.AttemptResultResponse;
+import com.examtyper.attempt.dto.QuotaStatusResponse;
+import com.examtyper.attempt.dto.RecentResultResponse;
 import com.examtyper.attempt.dto.StartAttemptRequest;
 import com.examtyper.attempt.dto.SubmitAttemptRequest;
 import com.examtyper.common.web.CurrentUser;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -62,5 +65,18 @@ public class AttemptController {
     @Operation(summary = "The stored result of a submitted test")
     public ResponseEntity<AttemptResultResponse> result(@PathVariable Long attemptId) {
         return ResponseEntity.ok(attemptService.getResult(CurrentUser.requireId(), attemptId));
+    }
+
+    @GetMapping("/recent")
+    @Operation(summary = "The candidate's recent results")
+    public ResponseEntity<List<RecentResultResponse>> recent(
+            @RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(attemptService.recentResults(CurrentUser.requireId(), limit));
+    }
+
+    @GetMapping("/quota")
+    @Operation(summary = "Where the candidate stands against the daily allowance")
+    public ResponseEntity<QuotaStatusResponse> quota() {
+        return ResponseEntity.ok(attemptService.quotaStatus(CurrentUser.requireId()));
     }
 }

@@ -2,6 +2,8 @@ package com.examtyper.attempt;
 
 import com.examtyper.attempt.dto.AttemptResponse;
 import com.examtyper.attempt.dto.AttemptResultResponse;
+import com.examtyper.attempt.dto.QuotaStatusResponse;
+import com.examtyper.attempt.dto.RecentResultResponse;
 import com.examtyper.attempt.dto.StartAttemptRequest;
 import com.examtyper.attempt.dto.SubmitAttemptRequest;
 import com.examtyper.common.error.BusinessException;
@@ -14,6 +16,7 @@ import com.examtyper.passage.PassageRepository;
 import com.examtyper.scoring.ErrorType;
 import com.examtyper.scoring.ScoreResult;
 import com.examtyper.scoring.ScoringEngine;
+import com.examtyper.user.User;
 import com.examtyper.scoring.ScoringRules;
 import com.examtyper.scoring.WordDiff;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -51,6 +55,7 @@ public class AttemptService {
     private final PassageRepository passageRepository;
     private final ScoringEngine scoringEngine;
     private final ObjectMapper objectMapper;
+    private final com.examtyper.reporting.CertificateService certificateService;
     private final QuotaService quotaService;
     private final com.examtyper.user.UserRepository userRepository;
 
@@ -61,13 +66,15 @@ public class AttemptService {
                           ScoringEngine scoringEngine,
                           ObjectMapper objectMapper,
                           QuotaService quotaService,
-                          com.examtyper.user.UserRepository userRepository) {
+                          com.examtyper.user.UserRepository userRepository,
+                          com.examtyper.reporting.CertificateService certificateService) {
         this.attemptRepository = attemptRepository;
         this.eventRepository = eventRepository;
         this.examProfileService = examProfileService;
         this.passageRepository = passageRepository;
         this.scoringEngine = scoringEngine;
         this.objectMapper = objectMapper;
+        this.certificateService = certificateService;
         this.quotaService = quotaService;
         this.userRepository = userRepository;
     }
@@ -221,6 +228,19 @@ public class AttemptService {
 
         attemptRepository.save(attempt);
 
+        // A certificate is issued when a full-length mock is passed. The
+        // issuing is idempotent, so a test that is submitted twice does not
+        // give two certificates.
+        Long certificateId = null;
+        try {
+            certificateId = certificateService.issueForAttempt(attempt)
+                    .map(certificate -> certificate.getId())
+                    .orElse(null);
+        } catch (RuntimeException e) {
+            // A certificate that cannot be issued must not lose the test.
+            log.warn("Could not issue a certificate for attempt {}", attemptId, e);
+        }
+
         log.info("Submitted attempt {} for user {}: net {} WPM, accuracy {}%, passed {}",
                 attemptId, userId, result.netWpm(), result.accuracyPct(), result.passed());
 
@@ -233,7 +253,7 @@ public class AttemptService {
                 response.blurCount(), response.durationMs(), response.typedChars(), response.referenceWords(),
                 response.typedWords(), response.correctWords(), response.passed(), response.passingNetWpm(),
                 response.startedAt(), response.submittedAt(), response.typedText(), response.referenceText(),
-                response.wordDiffs(), response.errorBreakdown(), cheatFlags, response.certificateId());
+                response.wordDiffs(), response.errorBreakdown(), cheatFlags, certificateId);
     }
 
     /**
@@ -348,6 +368,55 @@ public class AttemptService {
         Attempt attempt = attemptRepository.findByIdAndUserId(attemptId, userId)
                 .orElseThrow(() -> NotFoundException.of("Attempt", attemptId));
         return toResultResponse(attempt);
+    }
+
+    /**
+     * The candidate's recent results, newest first.
+     */
+    @Transactional(readOnly = true)
+    public List<RecentResultResponse> recentResults(Long userId, int limit) {
+        return attemptRepository
+                .findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, Math.max(1, Math.min(100, limit))))
+                .getContent()
+                .stream()
+                .filter(attempt -> attempt.getSubmittedAt() != null)
+                .map(attempt -> new RecentResultResponse(
+                        attempt.getId(),
+                        attempt.getExamCode(),
+                        examName(attempt.getExamCode()),
+                        attempt.getNetWpm() == null ? 0.0 : attempt.getNetWpm().doubleValue(),
+                        attempt.getAccuracyPct() == null ? 0.0 : attempt.getAccuracyPct().doubleValue(),
+                        Boolean.TRUE.equals(attempt.getPassed()),
+                        attempt.getSubmittedAt()))
+                .toList();
+    }
+
+    /**
+     * Where the candidate stands against the daily allowance.
+     */
+    @Transactional(readOnly = true)
+    public QuotaStatusResponse quotaStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> NotFoundException.of("User", userId));
+        QuotaService.QuotaStatus status = quotaService.status(user);
+        return new QuotaStatusResponse(
+                status.used(),
+                status.limit(),
+                status.remaining(),
+                status.isPro(),
+                status.resetsAt());
+    }
+
+    /**
+     * The name of an exam, for the dashboard.
+     */
+    private String examName(String examCode) {
+        try {
+            return examProfileService.findByCode(examCode).getName();
+        } catch (RuntimeException e) {
+            // The profile may have been withdrawn since the attempt was made.
+            return examCode;
+        }
     }
 
     /**

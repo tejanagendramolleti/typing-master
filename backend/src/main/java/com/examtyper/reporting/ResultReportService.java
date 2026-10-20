@@ -1,0 +1,139 @@
+package com.examtyper.reporting;
+
+import com.examtyper.attempt.Attempt;
+import com.examtyper.attempt.AttemptRepository;
+import com.examtyper.common.error.BusinessException;
+import com.examtyper.common.error.ErrorCode;
+import com.examtyper.common.error.NotFoundException;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+
+/**
+ * The downloadable result report.
+ *
+ * <p>A Pro feature. The report is the same information the result page
+ * shows, laid out for printing: the numbers, the error breakdown and the
+ * passage with the mistakes marked.
+ */
+@Service
+public class ResultReportService {
+
+    private static final Font TITLE = font(FontFactory.HELVETICA_BOLD, 18, 0x0F172A);
+    private static final Font HEADING = font(FontFactory.HELVETICA_BOLD, 12, 0x4F46E5);
+    private static final Font BODY = font(FontFactory.HELVETICA, 10, 0x334155);
+    private static final Font MONO = font(FontFactory.COURIER, 9, 0x334155);
+    private static final Font MONO_WRONG = font(FontFactory.COURIER, 9, 0xDC2626);
+    private static final Font MONO_MISSING = font(FontFactory.COURIER, 9, 0xD97706);
+    private static final Font SMALL = font(FontFactory.HELVETICA, 8, 0x64748B);
+
+    private final AttemptRepository attemptRepository;
+
+    public ResultReportService(AttemptRepository attemptRepository) {
+        this.attemptRepository = attemptRepository;
+    }
+
+    /**
+     * The report for an attempt, as a PDF.
+     *
+     * @param userId    the candidate
+     * @param attemptId the test
+     */
+    @Transactional(readOnly = true)
+    public byte[] toPdf(Long userId, Long attemptId) {
+        Attempt attempt = attemptRepository.findByIdAndUserId(attemptId, userId)
+                .orElseThrow(() -> new NotFoundException("No such test."));
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Document document = new Document(PageSize.A4, 45, 45, 45, 45);
+
+        try {
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            Paragraph title = new Paragraph("Typing Test Report", TITLE);
+            title.setSpacingAfter(4);
+            document.add(title);
+
+            Paragraph meta = new Paragraph(
+                    attempt.getExamCode() + " · "
+                            + DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm", Locale.ENGLISH)
+                            .format(attempt.getSubmittedAt().atZone(ZoneId.systemDefault())),
+                    SMALL);
+            meta.setSpacingAfter(18);
+            document.add(meta);
+
+            // ---- The numbers ----
+            PdfPTable numbers = new PdfPTable(4);
+            numbers.setWidths(new float[]{1, 1, 1, 1});
+            numbers.setSpacingAfter(20);
+            numbers.addCell(cell("Net speed", attempt.getNetWpm() == null ? "-" : attempt.getNetWpm() + " wpm"));
+            numbers.addCell(cell("Gross speed", attempt.getGrossWpm() == null ? "-" : attempt.getGrossWpm() + " wpm"));
+            numbers.addCell(cell("Accuracy", attempt.getAccuracyPct() == null ? "-" : attempt.getAccuracyPct() + "%"));
+            numbers.addCell(cell("Result", Boolean.TRUE.equals(attempt.getPassed()) ? "Pass" : "Below the bar"));
+            document.add(numbers);
+
+            // ---- The mistakes ----
+            Paragraph mistakesHeading = new Paragraph("The mistakes", HEADING);
+            mistakesHeading.setSpacingAfter(8);
+            document.add(mistakesHeading);
+
+            PdfPTable mistakes = new PdfPTable(4);
+            mistakes.setWidths(new float[]{1, 1, 1, 1});
+            mistakes.setSpacingAfter(20);
+            mistakes.addCell(cell("Full mistakes", String.valueOf(attempt.getFullMistakes())));
+            mistakes.addCell(cell("Half mistakes", String.valueOf(attempt.getHalfMistakes())));
+            mistakes.addCell(cell("Keys pressed", String.valueOf(attempt.getKeystrokeCount())));
+            mistakes.addCell(cell("Backspaces", String.valueOf(attempt.getBackspaceCount())));
+            document.add(mistakes);
+
+            // ---- The passage ----
+            Paragraph passageHeading = new Paragraph("The passage", HEADING);
+            passageHeading.setSpacingAfter(8);
+            document.add(passageHeading);
+
+            document.add(new Paragraph(attempt.getReferenceText(), MONO));
+
+            Paragraph footer = new Paragraph(
+                    "Generated by ExamTyper. The score is calculated on the server from the "
+                            + "text that was typed and the timing that was recorded during the test.",
+                    SMALL);
+            footer.setSpacingBefore(24);
+            document.add(footer);
+
+            document.close();
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "The report could not be produced.");
+        }
+
+        return out.toByteArray();
+    }
+
+    private static PdfPCell cell(String label, String value) {
+        PdfPCell cell = new PdfPCell();
+        cell.setPadding(8);
+        cell.setBorderColor(Color.decode("#E2E8F0"));
+        cell.addElement(new Phrase(label, SMALL));
+        cell.addElement(new Phrase(value, BODY));
+        return cell;
+    }
+
+    private static Font font(String family, int size, int colour) {
+        return FontFactory.getFont(family, size, Color.decode(String.format("#%06X", colour)));
+    }
+}
