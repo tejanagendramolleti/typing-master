@@ -11,7 +11,11 @@ import { cleanup } from '@testing-library/react'
 
 afterEach(() => {
   cleanup()
-  vi.restoreAllMocks()
+  // `vi.restoreAllMocks()` is deliberately not called here. It resets the
+  // implementation of every mock, including the ones a test file installs
+  // with `vi.mock`, so the second test in a file would find its stubs
+  // returning nothing. A test that needs a stub reset does it itself.
+  vi.clearAllMocks()
 })
 
 // jsdom has no layout engine, so anything that measures the element returns

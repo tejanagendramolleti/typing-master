@@ -260,3 +260,36 @@ rules, and the whole tree passes with `--max-warnings=0`.
 
 497 frontend tests pass. The type check is clean and the production build
 succeeds.
+
+## The frontend test suite
+
+**Status: complete for the parts that are built**
+
+- The keyboard mappers: 497 tests, 98.6% of lines and 100% of functions over
+  the keyboard module, against a 90% threshold.
+- The typing hook: 20 tests covering the typed text, the keystroke and
+  backspace counts, the recorded events, the expiry, and the fact that the
+  layout is given the passage so it can form a conjunct.
+- The word comparison: 11 tests.
+- The result page: 15 tests covering the verdict, the six numbers, the
+  diff, the breakdown, the cheat flag and the certificate.
+- The dashboard: 10 tests covering the daily allowance and the paywall —
+  the upgrade prompt appears when the three free tests are spent, does not
+  appear for a Pro member, and the Pro member is labelled as such.
+
+**553 frontend tests pass in total.**
+
+**Two things about the test setup were wrong and are now fixed:**
+1. `vi.restoreAllMocks()` was called in the shared `afterEach`. It resets
+   the implementation of every mock, including the ones a test file
+   installs with `vi.mock`, so the second test in a file found its stubs
+   returning nothing. It is now `vi.clearAllMocks()`, which clears the
+   calls but keeps the implementations.
+2. A component that reads `useParams` needs a matching `Route`, not just
+   a `MemoryRouter` — the params come from the route pattern. The shared
+   `renderWithProviders` helper does this now, so a test cannot get it
+   wrong by accident.
+
+The `vi.mock` factory is also hoisted above the imports, so a stub that
+reads a module-level variable has to use `vi.hoisted` or it reads the
+variable before it is assigned.
