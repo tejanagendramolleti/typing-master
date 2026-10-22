@@ -5,10 +5,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The base class for the integration tests.
@@ -23,16 +19,51 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @SpringBootTest
 @ActiveProfiles("test")
-@Testcontainers
 public abstract class PostgresIntegrationTest {
 
-    /** The database the integration tests run against. */
-    @Container
-    public static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("examtyper")
-            .withUsername("examtyper")
-            .withPassword("examtyper")
-            .withReuse(true);
+    /**
+     * The database the integration tests run against.
+     *
+     * <p>It is started by hand rather than declared as a {@code @Container}
+     * field, and that is deliberate. The JUnit extension manages the
+     * lifetime of a container around the class that declares it, but the
+     * Spring context is cached and handed to the classes that follow, so
+     * the second class would be given a context whose data source points at
+     * a container that has already been stopped — and every test in it
+     * would fail with a refused connection. Starting the container here
+     * gives the whole run one database, on one port, for as long as the
+     * JVM is alive.
+     */
+    public static final PostgreSQLContainer<?> POSTGRES = startPostgres();
+
+    /**
+     * Starts the container and makes sure it goes away with the JVM.
+     */
+    private static PostgreSQLContainer<?> startPostgres() {
+        PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:16-alpine")
+                .withDatabaseName("examtyper")
+                .withUsername("examtyper")
+                .withPassword("examtyper");
+
+        try {
+            container.start();
+        } catch (RuntimeException cause) {
+            throw new IllegalStateException("The test database could not be started.", cause);
+        }
+
+        // Ryuk collects the container when the JVM exits, but a shutdown
+        // hook is tidier: the database is stopped deliberately, in order,
+        // rather than being killed with whatever else is running.
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                container.stop();
+            } catch (RuntimeException ignored) {
+                // Nothing useful can be done while the JVM is shutting down.
+            }
+        }));
+
+        return container;
+    }
 
     /**
      * Points the application at the container.

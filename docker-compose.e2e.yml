@@ -1,0 +1,22 @@
+# An override for the end-to-end tests.
+#
+# The tests all come from one address — the machine they run on — and each
+# of them registers a new candidate. The registration limit that is right
+# for a real deployment, five in ten minutes, is therefore far too tight
+# for a test run, and the suite spends most of its time being told to slow
+# down. The limits are raised here, and only here: the ordinary deployment
+# keeps the ones in `docker-compose.yml`.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d --build
+#
+services:
+  backend:
+    environment:
+      RATE_LIMIT_REGISTER_REQUESTS: 500
+      RATE_LIMIT_REGISTER_PERIOD: 10m
+      RATE_LIMIT_LOGIN_REQUESTS: 500
+      RATE_LIMIT_LOGIN_PERIOD: 5m
+      RATE_LIMIT_FORGOT_PASSWORD_REQUESTS: 500
+      RATE_LIMIT_RESET_PASSWORD_REQUESTS: 500
+      RATE_LIMIT_REFRESH_REQUESTS: 1000
+      RATE_LIMIT_SUBMIT_REQUESTS: 1000

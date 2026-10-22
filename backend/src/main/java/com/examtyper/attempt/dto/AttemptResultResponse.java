@@ -10,6 +10,7 @@ import java.util.Map;
  * @param wordDiffs      per-word discrepancies for the coloured diff view
  * @param errorBreakdown how many of each error type occurred
  * @param cheatFlags     a list of anti-cheat signals detected during the attempt
+ * @param minAccuracyPct the accuracy floor the attempt was marked against
  */
 public record AttemptResultResponse(
         Long attemptId,
@@ -34,6 +35,7 @@ public record AttemptResultResponse(
         int correctWords,
         boolean passed,
         double passingNetWpm,
+        double minAccuracyPct,
         Instant startedAt,
         Instant submittedAt,
         String typedText,

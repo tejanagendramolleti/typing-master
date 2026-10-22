@@ -57,8 +57,16 @@ export function useTyping(options: {
   onExpire?: () => void
   /** The attempt id, so the layout knows which attempt it is. */
   attemptId?: number
+  /**
+   * How long the attempt had already been running when this page loaded.
+   *
+   * A resumed attempt does not get a fresh clock. Without this, a candidate
+   * could reload the page and start the count again, which would make the
+   * speed the server works out from the recorded offsets too good.
+   */
+  initialElapsedMs?: number
 }): TypingApi {
-  const { reference, layout, durationMs, showLiveWpm, onExpire } = options
+  const { reference, layout, durationMs, showLiveWpm, onExpire, initialElapsedMs = 0 } = options
 
   const [text, setText] = useState('')
   const [keystrokes, setKeystrokes] = useState(0)
@@ -68,16 +76,16 @@ export function useTyping(options: {
   const [cheatAttempted, setCheatAttempted] = useState(false)
 
   const eventsRef = useRef<TimingEvent[]>([])
-  const startedAtRef = useRef<number>(Date.now())
+  const startedAtRef = useRef<number>(Date.now() - initialElapsedMs)
   const expiredRef = useRef(false)
 
   // The reference and the layout change when a test is resumed or switched.
   useEffect(() => {
-    startedAtRef.current = Date.now()
+    startedAtRef.current = Date.now() - initialElapsedMs
     expiredRef.current = false
     setIsExpired(false)
-    setRemainingMs(durationMs)
-  }, [durationMs, reference])
+    setRemainingMs(Math.max(0, durationMs - initialElapsedMs))
+  }, [durationMs, reference, initialElapsedMs])
 
   // The clock.
   useEffect(() => {

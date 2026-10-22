@@ -204,6 +204,11 @@ export function put<T>(path: string, body?: unknown, options: RequestOptions = {
   return request<T>(path, { ...options, method: 'PUT', body })
 }
 
+/** Sends a `PATCH` request. */
+export function patch<T>(path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
+  return request<T>(path, { ...options, method: 'PATCH', body })
+}
+
 /** Sends a `DELETE` request. */
 export function del<T>(path: string, options: RequestOptions = {}): Promise<T> {
   return request<T>(path, { ...options, method: 'DELETE' })

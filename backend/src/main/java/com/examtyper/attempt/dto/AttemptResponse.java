@@ -14,6 +14,8 @@ import java.time.Instant;
  * @param elapsedMs    how long the attempt has been running
  * @param backspaceAllowed whether corrections are permitted
  * @param showLiveWpm  whether the client should show a live speed
+ * @param passingNetWpm the net speed the exam requires to pass
+ * @param minAccuracyPct the accuracy the exam requires to pass
  * @param typedText    any text already typed, for resume
  * @param keystrokeCount how many keys have been pressed so far
  */
@@ -33,6 +35,7 @@ public record AttemptResponse(
         boolean backspaceAllowed,
         boolean showLiveWpm,
         double passingNetWpm,
+        double minAccuracyPct,
         String typedText,
         int keystrokeCount,
         int backspaceCount

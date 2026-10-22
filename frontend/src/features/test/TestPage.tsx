@@ -55,6 +55,25 @@ export default function TestPage() {
   )
 
   /**
+   * How long the attempt had been running when this page loaded.
+   *
+   * Both timestamps are the server's, so a candidate whose own clock is
+   * wrong does not get a wrong answer. The value is fixed for the life of
+   * the page: the clock in the typing hook carries on from it, and a value
+   * that changed on every render would keep resetting the count.
+   */
+  const attemptStartedAt = attempt?.startedAt ?? null
+  const attemptServerTime = attempt?.serverTime ?? null
+
+  const initialElapsedMs = useMemo(() => {
+    if (!attemptStartedAt || !attemptServerTime) return 0
+    const startedAt = new Date(attemptStartedAt).getTime()
+    const serverTime = new Date(attemptServerTime).getTime()
+    if (Number.isNaN(startedAt) || Number.isNaN(serverTime)) return 0
+    return Math.max(0, serverTime - startedAt)
+  }, [attemptStartedAt, attemptServerTime])
+
+  /**
    * The submit is called when the test ends, either by the timer or by the
    * candidate pressing the button.
    */
@@ -82,6 +101,7 @@ export default function TestPage() {
     durationMs: (attempt?.durationSeconds ?? 0) * 1000,
     showLiveWpm: attempt?.showLiveWpm ?? true,
     onExpire: handleExpire,
+    initialElapsedMs,
   })
 
   // Submit when the time runs out.
@@ -230,6 +250,9 @@ export default function TestPage() {
             <Badge tone="accent">{attempt.examName}</Badge>
             <span className="truncate text-sm text-ink-500 dark:text-ink-400">
               {attempt.language}
+            </span>
+            <span className="hidden text-xs text-ink-400 dark:text-ink-500 sm:inline">
+              {attempt.passingNetWpm} wpm · {attempt.minAccuracyPct}% accuracy to pass
             </span>
           </div>
 

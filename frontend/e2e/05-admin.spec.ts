@@ -14,7 +14,7 @@ test.describe('The admin panel', () => {
 
     // ---- The import panel is there ----
     await page.getByRole('tab', { name: 'Passages' }).click()
-    await expect(page.getByText('Import passages')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Import passages' })).toBeVisible()
 
     // ---- A passage is added through the import ----
     const title = 'Added by the administrator ' + Date.now().toString(36)
@@ -48,9 +48,9 @@ test.describe('The admin panel', () => {
     await page.goto('/admin')
     await page.getByRole('tab', { name: 'Summary' }).click()
 
-    await expect(page.getByText('Users')).toBeVisible()
-    await expect(page.getByText('Attempts')).toBeVisible()
-    await expect(page.getByText('Passages')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Users', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Attempts', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Passages', exact: true })).toBeVisible()
   })
 
   test('a candidate cannot reach the admin panel', async ({ page }) => {

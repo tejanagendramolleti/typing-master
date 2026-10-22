@@ -59,6 +59,11 @@ export async function signInAsAdmin(page: Page) {
  *
  * The keys are sent one at a time so that the layout sees real key events
  * rather than a paste, which the application blocks.
+ *
+ * There is a short delay between the keys. Without one the browser sends
+ * them faster than a person could type, and the server — which checks that
+ * the recorded timings could have been typed — would rightly mark the
+ * attempt as impossible.
  */
 export async function typePassage(page: Page, text: string) {
   const area = page.getByLabel('The text you have typed')
@@ -66,9 +71,12 @@ export async function typePassage(page: Page, text: string) {
 
   for (const character of text) {
     if (character === ' ') {
-      await page.keyboard.press('Space')
+      await page.keyboard.press('Space', { delay: KEY_DELAY_MS })
     } else {
-      await page.keyboard.type(character)
+      await page.keyboard.type(character, { delay: KEY_DELAY_MS })
     }
   }
 }
+
+/** The pause between two key presses, in milliseconds. */
+const KEY_DELAY_MS = 20

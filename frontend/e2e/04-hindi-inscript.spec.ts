@@ -58,9 +58,11 @@ test.describe('The Hindi Inscript layout', () => {
     await expect(page).toHaveURL(/\/test\/\d+/, { timeout: 30_000 })
 
     await page.getByLabel('The text you have typed').click()
-    // क (Q) then the AA matra (Shift+1).
+    // क (Q) then the AA matra. On the number row the plain key writes the
+    // sign, which attaches to the consonant before it, and the shifted key
+    // writes the vowel on its own.
     await page.keyboard.press('KeyQ')
-    await page.keyboard.press('Shift+Digit1')
+    await page.keyboard.press('Digit1')
 
     const typed = await page.getByLabel('The text you have typed').inputValue()
     // The matra is attached, not standing on its own.

@@ -146,16 +146,62 @@ this repository. `docs/ADDING_RAZORPAY.md` explains how to add one later.
 
 ---
 
-## 8. Known gaps still to be closed
+## 8. The telemetry check is a heuristic, not a proof
 
-These are tracked in `PLAN.md` and are not yet finished:
+**Status:** shipped, and documented in `DECISIONS.md` D22.
 
-- Rate limiting on the auth and test-submit endpoints.
-- The `MailSender` interface and its console implementation.
-- The seeded passage content (40 English, 30 Hindi, 20 Telugu, 15
-  alphanumeric) and the NFC/charset validation test over it.
-- The frontend shell, the design system and the public pages.
-- The on-screen keyboard overlay.
-- Analytics, the smart drill generator, the PDF report and the certificate.
-- Billing, the leaderboard and the admin panel.
-- The Playwright end-to-end suite and `scripts/verify.sh`.
+**What it means.** Every submission is checked for two impossibilities: that
+the recorded key presses could have produced the submitted text, and that
+the attempt took long enough to have been typed at all. A submission that
+fails is flagged `IMPOSSIBLE_TELEMETRY` and is not counted as a pass.
+
+**What it does not do.** It does not prove that a result was genuinely
+typed. A client that composes a plausible set of events — the right number
+of key presses, at plausible times — is believed. The checks are built to
+catch the crude forgeries, the ones a script produces, and the thresholds
+are deliberately generous so that an honest candidate is never accused.
+
+**Why the thresholds are where they are.** One key press is allowed to be
+worth four code points, because in the Indic layouts a press can add a
+virama and a consonant and a matra can add a fourth character. The speed
+ceiling is a hundred code points a second, which is about six times the
+world record for sustained typing.
+
+**What would fix it properly.** A signed event stream would close it, but
+it would need a key that the browser cannot read, which means a native
+client. For a practice product, a heuristic that catches the crude
+forgeries and never false-accuses an honest candidate is the right trade.
+
+---
+
+## 9. The rate limiter counts per instance, not per cluster
+
+**Status:** shipped.
+
+**What it means.** The buckets live in memory, so a deployment with more
+than one instance allows each instance its own limit. The limit is
+therefore looser than it looks from the outside.
+
+**Why it is acceptable here.** The limits are on the authentication
+endpoints and on the test submission. The authentication limits are there
+to make guessing a password expensive, and the candidate's own account is
+the thing being protected, so a per-instance limit still raises the cost
+of an attack by the number of instances. A shared store would be the fix,
+and it is a change of one class.
+
+---
+
+## 10. The attempts stored before the accuracy floor was enforced keep no floor
+
+**Status:** shipped, and documented in `DECISIONS.md` D21.
+
+**What it means.** The attempts that were taken before the floor was
+snapshotted onto the attempt row keep the floor they were taken under,
+which was none. They are not re-scored, because re-scoring them would
+change a result the candidate has already been shown.
+
+**Why it matters.** It means the stored history of a deployment that was
+live before this change contains results that the current rules would not
+produce. Every attempt taken after the change is marked against the floor
+the exam asked for.
+

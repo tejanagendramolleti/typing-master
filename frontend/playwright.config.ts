@@ -41,17 +41,24 @@ export default defineConfig({
   ],
 
   /**
-   * Brings the whole application up before the tests and takes it down
-   * afterwards.
+   * Brings the whole application up before the tests.
    *
-   * The stack is left running when the tests are skipped, because starting
+   * The stack is started with the `docker-compose.e2e.yml` override, which
+   * raises the rate limits — every test comes from the same address, and
+   * the limits that suit a real deployment would stop the suite halfway
+   * through. The work is done in the global setup rather than here,
+   * because the override has to be applied even when a stack is already
+   * running, and the web server block would skip the command in that case.
+   *
+   * The stack is left running when the tests finish, because starting
    * PostgreSQL and building the images is slow and the developer usually
    * wants to look at the result.
    */
+  globalSetup: './e2e/global-setup.ts',
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: 'docker compose up -d --build',
+        command: 'docker compose -f docker-compose.yml -f docker-compose.e2e.yml up -d --build',
         cwd: '..',
         url: 'http://localhost:3000',
         reuseExistingServer: true,

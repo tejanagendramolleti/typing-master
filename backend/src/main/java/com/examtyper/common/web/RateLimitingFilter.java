@@ -1,5 +1,6 @@
 package com.examtyper.common.web;
 
+import com.examtyper.common.config.AppProperties;
 import com.examtyper.common.error.ApiError;
 import com.examtyper.common.error.ErrorCode;
 import com.examtyper.security.AuthenticatedUser;
@@ -21,9 +22,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The rate limiter.
@@ -55,9 +53,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             .build();
 
     private final ObjectMapper objectMapper;
+    private final AppProperties appProperties;
 
-    public RateLimitingFilter(ObjectMapper objectMapper) {
+    public RateLimitingFilter(ObjectMapper objectMapper, AppProperties appProperties) {
         this.objectMapper = objectMapper;
+        this.appProperties = appProperties;
     }
 
     /**
@@ -69,28 +69,30 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private record Limit(int requests, Duration period) {
     }
 
-    /** The limits, by the path prefix. */
-    private static final Map<String, Limit> LIMITS = Map.of(
-            "/api/v1/auth/login", new Limit(10, Duration.ofMinutes(5)),
-            "/api/v1/auth/register", new Limit(5, Duration.ofMinutes(10)),
-            "/api/v1/auth/forgot-password", new Limit(5, Duration.ofMinutes(10)),
-            "/api/v1/auth/reset-password", new Limit(10, Duration.ofMinutes(10)),
-            "/api/v1/auth/refresh", new Limit(60, Duration.ofMinutes(5)),
-            "/api/v1/attempts/", new Limit(120, Duration.ofMinutes(5))
-    );
+    /**
+     * The limit that applies to a request, and the prefix it is counted
+     * under.
+     *
+     * <p>The two are together because the key has to name the endpoint: a
+     * client that spends its registration allowance has not spent its
+     * login allowance.
+     */
+    private record Rule(String prefix, Limit limit) {
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        Limit limit = limitFor(request);
+        Rule rule = ruleFor(request);
 
-        if (limit == null) {
+        if (rule == null) {
             chain.doFilter(request, response);
             return;
         }
 
-        String key = keyFor(request);
+        Limit limit = rule.limit();
+        String key = rule.prefix() + "|" + clientKey(request);
         TokenBucket bucket = buckets.get(key, k -> new TokenBucket(limit.requests(), limit.period()));
 
         if (!bucket.tryConsume()) {
@@ -103,46 +105,45 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     /**
-     * The limit that applies to this request, or null when it is not
-     * limited.
+     * The rule that applies to this request, or null when the request is
+     * not limited.
+     *
+     * <p>Only the paths that cost something are limited. A GET on the
+     * catalogue is not.
      */
-    private Limit limitFor(HttpServletRequest request) {
+    private Rule ruleFor(HttpServletRequest request) {
         String path = request.getRequestURI();
+        AppProperties.RateLimit limits = appProperties.getRateLimit();
 
-        // Only the paths that cost something are limited. A GET on the
-        // catalogue is not.
-        for (Map.Entry<String, Limit> entry : LIMITS.entrySet()) {
-            String prefix = entry.getKey();
-            if (!path.startsWith(prefix)) {
-                continue;
-            }
-            // The attempt limit covers the submission endpoint, not the
-            // whole attempts tree, because starting a test is cheap and
-            // submitting one is not.
-            if (prefix.equals("/api/v1/attempts/") && !path.endsWith("/submit")) {
-                continue;
-            }
-            return entry.getValue();
+        if (path.startsWith("/api/v1/auth/login")) {
+            return rule("/api/v1/auth/login", limits.getLogin());
+        }
+        if (path.startsWith("/api/v1/auth/register")) {
+            return rule("/api/v1/auth/register", limits.getRegister());
+        }
+        if (path.startsWith("/api/v1/auth/forgot-password")) {
+            return rule("/api/v1/auth/forgot-password", limits.getForgotPassword());
+        }
+        if (path.startsWith("/api/v1/auth/reset-password")) {
+            return rule("/api/v1/auth/reset-password", limits.getResetPassword());
+        }
+        if (path.startsWith("/api/v1/auth/refresh")) {
+            return rule("/api/v1/auth/refresh", limits.getRefresh());
+        }
+        // The attempt limit covers the submission endpoint, not the whole
+        // attempts tree, because starting a test is cheap and submitting
+        // one is not.
+        if (path.startsWith("/api/v1/attempts/") && path.endsWith("/submit")) {
+            return rule("/api/v1/attempts/", limits.getSubmit());
         }
         return null;
     }
 
     /**
-     * The key the bucket is counted under.
-     *
-     * <p>The authenticated user is used when there is one, so two people
-     * behind the same address do not use up each other's allowance. The
-     * address is used otherwise.
+     * Builds a rule from a configured limit.
      */
-    private String keyFor(HttpServletRequest request) {
-        String path = request.getRequestURI();
-
-        for (Map.Entry<String, Limit> entry : LIMITS.entrySet()) {
-            if (path.startsWith(entry.getKey())) {
-                return entry.getKey() + "|" + clientKey(request);
-            }
-        }
-        return path;
+    private Rule rule(String prefix, AppProperties.Endpoint endpoint) {
+        return new Rule(prefix, new Limit(endpoint.getRequests(), endpoint.getPeriod()));
     }
 
     private String clientKey(HttpServletRequest request) {

@@ -2,6 +2,8 @@ package com.examtyper.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.time.Duration;
+
 /**
  * Typed view of the {@code app.*} configuration block.
  */
@@ -16,6 +18,7 @@ public class AppProperties {
     private Ai ai = new Ai();
     private Seed seed = new Seed();
     private Frontend frontend = new Frontend();
+    private RateLimit rateLimit = new RateLimit();
 
     public String getEnv() {
         return env;
@@ -79,6 +82,115 @@ public class AppProperties {
 
     public void setFrontend(Frontend frontend) {
         this.frontend = frontend;
+    }
+
+    public RateLimit getRateLimit() {
+        return rateLimit;
+    }
+
+    public void setRateLimit(RateLimit rateLimit) {
+        this.rateLimit = rateLimit;
+    }
+
+    /**
+     * The rate limits, as configuration.
+     *
+     * <p>They are here rather than in the filter itself because the right
+     * limit depends on where the application is running. A candidate centre
+     * with fifty people behind one address needs a far more generous
+     * registration limit than a candidate on their own connection, and an
+     * operator is the one who knows which of the two they have. The
+     * defaults are the ones the filter has always used.
+     */
+    public static class RateLimit {
+
+        private Endpoint login = new Endpoint(10, Duration.ofMinutes(5));
+        private Endpoint register = new Endpoint(5, Duration.ofMinutes(10));
+        private Endpoint forgotPassword = new Endpoint(5, Duration.ofMinutes(10));
+        private Endpoint resetPassword = new Endpoint(10, Duration.ofMinutes(10));
+        private Endpoint refresh = new Endpoint(60, Duration.ofMinutes(5));
+        private Endpoint submit = new Endpoint(120, Duration.ofMinutes(5));
+
+        public Endpoint getLogin() {
+            return login;
+        }
+
+        public void setLogin(Endpoint login) {
+            this.login = login;
+        }
+
+        public Endpoint getRegister() {
+            return register;
+        }
+
+        public void setRegister(Endpoint register) {
+            this.register = register;
+        }
+
+        public Endpoint getForgotPassword() {
+            return forgotPassword;
+        }
+
+        public void setForgotPassword(Endpoint forgotPassword) {
+            this.forgotPassword = forgotPassword;
+        }
+
+        public Endpoint getResetPassword() {
+            return resetPassword;
+        }
+
+        public void setResetPassword(Endpoint resetPassword) {
+            this.resetPassword = resetPassword;
+        }
+
+        public Endpoint getRefresh() {
+            return refresh;
+        }
+
+        public void setRefresh(Endpoint refresh) {
+            this.refresh = refresh;
+        }
+
+        public Endpoint getSubmit() {
+            return submit;
+        }
+
+        public void setSubmit(Endpoint submit) {
+            this.submit = submit;
+        }
+    }
+
+    /**
+     * One rate limit: how many requests are allowed, and over what period.
+     */
+    public static class Endpoint {
+
+        private int requests;
+        private Duration period;
+
+        public Endpoint() {
+        }
+
+        public Endpoint(int requests, Duration period) {
+            this.requests = requests;
+            this.period = period;
+        }
+
+        public int getRequests() {
+            return requests;
+        }
+
+        public void setRequests(int requests) {
+            this.requests = requests;
+        }
+
+        public Duration getPeriod() {
+            return period;
+        }
+
+        public void setPeriod(Duration period) {
+            this.period = period;
+        }
     }
 
     public boolean isProd() {

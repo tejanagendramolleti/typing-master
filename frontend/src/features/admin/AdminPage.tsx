@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Badge, Banner, Card, EmptyState, LoadingState, PageHeader } from '../../components/ui'
-import { get, post } from '../../lib/api'
-import type { ExamProfile } from '../../lib/types'
+import { get, patch, post } from '../../lib/api'
+import type { ExamProfile, Page } from '../../lib/types'
 
 /** One passage in the admin list. */
 interface AdminPassage {
   id: number
   title: string | null
-  content: string
   language: string
   examType: string
   difficulty: string
   wordCount: number
+  charCount: number
   active: boolean
 }
 
@@ -39,7 +39,8 @@ export default function AdminPage() {
 
   const { data: passages, isLoading: loadingPassages } = useQuery({
     queryKey: ['admin', 'passages'],
-    queryFn: () => get<AdminPassage[]>('/api/v1/admin/passages'),
+    // The passage bank is a page of results, not a plain list.
+    queryFn: () => get<Page<AdminPassage>>('/api/v1/admin/passages?size=50'),
   })
 
   const { data: exams } = useQuery({
@@ -89,7 +90,7 @@ export default function AdminPage() {
   })
 
   const togglePassage = useMutation({
-    mutationFn: (id: number) => post(`/api/v1/admin/passages/${id}/toggle`),
+    mutationFn: (id: number) => patch(`/api/v1/admin/passages/${id}/toggle`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'passages'] })
     },
@@ -133,7 +134,7 @@ export default function AdminPage() {
           <Card title="The passage bank">
             {loadingPassages ? (
               <LoadingState label="Loading the passages" />
-            ) : !passages || passages.length === 0 ? (
+            ) : !passages || passages.content.length === 0 ? (
               <EmptyState title="No passages yet" />
             ) : (
               <div className="max-h-[32rem] overflow-y-auto">
@@ -148,7 +149,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
-                    {passages.map((passage) => (
+                    {passages.content.map((passage) => (
                       <tr key={passage.id}>
                         <td className="py-2.5 pr-3 font-medium text-ink-900 dark:text-ink-100">
                           {passage.title}

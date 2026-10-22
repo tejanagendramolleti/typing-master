@@ -49,6 +49,10 @@ app:
   frontend:
     base-url: http://localhost:3000
     api-base-url: http://localhost:8080
+  seed:
+    # The tests get an empty database, so the counts they check are the
+    # counts they made themselves.
+    demo-users: false
 
 logging:
   level:

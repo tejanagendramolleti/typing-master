@@ -260,4 +260,39 @@ describe('teInscriptLayout', () => {
       expect(teInscriptLayout.rows).toHaveLength(5)
     })
   })
+
+  describe('the key caps', () => {
+    /**
+     * The on-screen keyboard is what the candidate reads when they are not
+     * sure of a key, so a cap that disagrees with the key is worse than no
+     * cap at all. The number row holds the vowels, and the plain key writes
+     * the sign while the shifted key writes the vowel on its own, so the
+     * cap has to say the same thing.
+     */
+    it.each([
+      ['Digit1', 0x0c3e, 0x0c05],
+      ['Digit2', 0x0c3e, 0x0c06],
+      ['Digit3', 0x0c3f, 0x0c07],
+      ['Digit4', 0x0c40, 0x0c08],
+      ['Digit5', 0x0c41, 0x0c09],
+      ['Digit6', 0x0c42, 0x0c0a],
+      ['Digit7', 0x0c46, 0x0c0e],
+      ['Digit8', 0x0c48, 0x0c10],
+      ['Digit9', 0x0c4a, 0x0c12],
+      ['Digit0', 0x0c4b, 0x0c13],
+      ['Minus', 0x0c4c, 0x0c14],
+    ])('shows %s as the sign, and its shift as the vowel on its own',
+      (code, matra, independent) => {
+        const key = teInscriptLayout.rows[0].keys.find((candidate) => candidate.code === code)
+
+        expect(key?.label).toBe(chars(matra))
+        expect(key?.shiftLabel).toBe(chars(independent))
+
+        // And the caps agree with what the key actually produces.
+        expect(teInscriptLayout.mapKey(keyEvent(code), state(KA)).text).toBe(chars(matra))
+        expect(teInscriptLayout.mapKey(keyEvent(code, { shiftKey: true }), state(KA)).text).toBe(
+          chars(independent),
+        )
+      })
+  })
 })

@@ -20,6 +20,9 @@ text you typed and the timing recorded during the test.
 - **Server-side scoring.** The browser sends what you typed and when each
   key was pressed; the server recomputes the speed, the accuracy and the
   mistakes. A client cannot report a speed it did not earn.
+- **A pass is a pass.** The speed bar and the accuracy floor both have to be
+  met, and both come from the exam profile — so a fast run with poor
+  accuracy is not a pass.
 - **Analytics that point somewhere.** Your speed and accuracy over time,
   the keys you are slow on, the words you miss most, and the hours of the
   day you type fastest. A drill built from the ones you actually get wrong.
@@ -85,7 +88,8 @@ export JWT_SECRET=change-this-to-something-at-least-32-characters-long
 
 ### The demo accounts
 
-The seed creates three accounts. They are for development only.
+The application creates three accounts on start-up. They are for development
+only.
 
 | Account | Email | Password | What it is |
 |---|---|---|---|
@@ -95,7 +99,8 @@ The seed creates three accounts. They are for development only.
 
 The passwords come from `ADMIN_PASSWORD`, `DEMO_FREE_PASSWORD` and
 `DEMO_PRO_PASSWORD`, and the seeding can be turned off entirely with
-`SEED_ENABLED=false`.
+`SEED_DEMO_USERS=false`. An account that already exists is left alone, so
+changing a password in the database is not undone by a restart.
 
 ## The environment
 
@@ -154,7 +159,7 @@ typing-master/
 │     ├─ features/   one folder per screen
 │     ├─ components/ the design system
 │     └─ lib/        the API client, the types, the session
-├─ e2e/              the Playwright tests
+├─ e2e/              the Playwright tests live in frontend/e2e/
 ├─ scripts/           the toolchain, the passage generator, verify.sh
 └─ docs/              the guide to adding a payment provider
 ```
@@ -179,6 +184,15 @@ Three things about it are worth knowing:
 - **The accuracy is weighted and symmetric** — `(correct + 0.5 × half) /
   max(reference words, typed words)` — so that both a wrong word and an
   extra word count against the score.
+
+And one thing about the attempt that decides the verdict:
+
+- **The timing is checked for plausibility.** Recomputing the score stops a
+  client from asserting a result; it does not stop a client from composing
+  the telemetry. A submission whose recorded key presses could not have
+  produced the text, or whose timings are faster than a person can type, is
+  flagged and is not counted as a pass. See [`DECISIONS.md`](DECISIONS.md)
+  D22.
 
 ### The keyboard layouts
 
@@ -240,6 +254,12 @@ cd frontend && npx playwright test
 `scripts/verify.sh` runs the lint, the backend tests, the interface tests,
 the build and the end-to-end tests, and it exits non-zero if any of them
 fail.
+
+The end-to-end tests start the whole application themselves, with
+`docker-compose.e2e.yml` laid over `docker-compose.yml`. The override
+raises the rate limits, because every test registers a new candidate from
+the same address, and it changes nothing else. The ordinary deployment
+keeps the limits in `docker-compose.yml` and the mode in `application.yml`.
 
 The backend's integration tests need Docker, because they run against a
 real PostgreSQL started by Testcontainers. The unit tests do not.

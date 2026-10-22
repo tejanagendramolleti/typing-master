@@ -36,7 +36,8 @@ test.describe('Registering and taking a test', () => {
     // ---- The result ----
     await expect(page).toHaveURL(/\/result\/\d+/, { timeout: 30_000 })
     await expect(page.getByText('Net speed')).toBeVisible()
-    await expect(page.getByText('Accuracy')).toBeVisible()
+    // The exact match matters: the verdict line also mentions the accuracy.
+    await expect(page.getByText('Accuracy', { exact: true })).toBeVisible()
     await expect(page.getByText('Word by word')).toBeVisible()
   })
 

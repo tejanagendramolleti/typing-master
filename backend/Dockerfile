@@ -25,7 +25,10 @@ EXPOSE 8080
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC" \
     SPRING_PROFILES_ACTIVE=prod
 
+# The address is 127.0.0.1 and not "localhost" on purpose: "localhost" can
+# resolve to the IPv6 loopback, where nothing is listening, and the check
+# would fail even though the API is up.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
-  CMD wget -qO- http://localhost:8080/actuator/health/readiness || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/actuator/health/readiness || exit 1
 
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/examtyper.jar"]

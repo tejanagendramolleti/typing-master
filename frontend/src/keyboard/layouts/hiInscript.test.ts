@@ -307,4 +307,47 @@ describe('hiInscriptLayout', () => {
       expect(hiInscriptLayout.rows).toHaveLength(5)
     })
   })
+
+  describe('the key caps', () => {
+    /**
+     * The on-screen keyboard is what the candidate reads when they are not
+     * sure of a key, so a cap that disagrees with the key is worse than no
+     * cap at all. The number row holds the vowels, and the plain key writes
+     * the sign while the shifted key writes the vowel on its own, so the
+     * cap has to say the same thing.
+     */
+    it.each([
+      ['Digit1', 0x093e, 0x0905],
+      ['Digit2', 0x093e, 0x0906],
+      ['Digit3', 0x093f, 0x0907],
+      ['Digit4', 0x0940, 0x0908],
+      ['Digit5', 0x0941, 0x0909],
+      ['Digit6', 0x0942, 0x090a],
+      ['Digit7', 0x0947, 0x090e],
+      ['Digit8', 0x0948, 0x0910],
+      ['Digit9', 0x094b, 0x0912],
+      ['Digit0', 0x094c, 0x0914],
+      ['Minus', 0x0943, 0x090b],
+      ['Equal', 0x0944, 0x090c],
+    ])('shows %s as the sign, and its shift as the vowel on its own',
+      (code, matra, independent) => {
+        const key = hiInscriptLayout.rows[0].keys.find((candidate) => candidate.code === code)
+
+        expect(key?.label).toBe(chars(matra))
+        expect(key?.shiftLabel).toBe(chars(independent))
+
+        // And the caps agree with what the key actually produces.
+        expect(hiInscriptLayout.mapKey(keyEvent(code), state(KA)).text).toBe(chars(matra))
+        expect(hiInscriptLayout.mapKey(keyEvent(code, { shiftKey: true }), state(KA)).text).toBe(
+          chars(independent),
+        )
+      })
+
+    it('shows the halant and the nukta on the key that produces them', () => {
+      const key = hiInscriptLayout.rows[1].keys.find((candidate) => candidate.code === 'Backslash')
+
+      expect(key?.label).toBe(VIRAMA)
+      expect(key?.shiftLabel).toBe(NUKTA)
+    })
+  })
 })

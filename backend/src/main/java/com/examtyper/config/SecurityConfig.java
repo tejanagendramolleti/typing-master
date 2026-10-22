@@ -74,6 +74,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/waitlist").permitAll()
 
+                        // The health endpoints. The container's health
+                        // check uses them, and a monitor needs them, and
+                        // neither has a session. The readiness endpoint
+                        // reports on the database, and the liveness one
+                        // only says the process is up.
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/actuator/info").permitAll()
+
                         // Public catalogue and content.
                         .requestMatchers(HttpMethod.GET, "/api/v1/exams/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/passages/public/**").permitAll()

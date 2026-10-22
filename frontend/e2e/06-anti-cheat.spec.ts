@@ -29,7 +29,7 @@ test.describe('The anti-cheat measures', () => {
     await expect(area).toHaveValue('')
 
     // ---- And the attempt was recorded ----
-    await expect(page.getByText('Recorded')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Recorded', { exact: true })).toBeVisible({ timeout: 15_000 })
   })
 
   test('the context menu is blocked', async ({ page }) => {
@@ -41,7 +41,7 @@ test.describe('The anti-cheat measures', () => {
     await expect(page).toHaveURL(/\/test\/\d+/, { timeout: 30_000 })
 
     await page.getByLabel('The text you have typed').click({ button: 'right' })
-    await expect(page.getByText('Recorded')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Recorded', { exact: true })).toBeVisible({ timeout: 15_000 })
   })
 
   test('leaving the tab is recorded', async ({ page }) => {
@@ -55,7 +55,7 @@ test.describe('The anti-cheat measures', () => {
     await page.getByLabel('The text you have typed').click()
     await page.evaluate(() => window.dispatchEvent(new Event('blur')))
 
-    await expect(page.getByText('Recorded')).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByText('Recorded', { exact: true })).toBeVisible({ timeout: 15_000 })
   })
 
   test('a flagged test says so on the result', async ({ page }) => {

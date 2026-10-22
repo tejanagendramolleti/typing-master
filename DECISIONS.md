@@ -247,3 +247,126 @@ more naturally on a keyboard but gets `क` + `aa` wrong in the common case.
 passage have drifted apart after a mistake, because the structural rule
 alone cannot tell a matra from an independent vowel in that situation. The
 consultation is bounded to that one decision, exactly as in D18.
+
+## D21 — The accuracy floor is snapshotted onto the attempt and enforced
+
+**Decision.** The `min_accuracy_pct` of the exam profile is copied onto the
+attempt row when the attempt starts, and the scoring is done against the
+snapshot. A candidate passes only when the net speed bar **and** the
+accuracy floor are both met.
+
+**Why.** The floor was in the profile, in the interface, in the certificate
+rule and in the copy on the result page — and nowhere in the path that
+decides whether a candidate passed. The snapshot of the rules on the attempt
+had the passing speed and not the accuracy, so the floor was always zero and
+the accuracy was never checked at all.
+
+The consequence was not subtle. A candidate who typed for two seconds and
+submitted was *very fast*: the elapsed time is short, the gross speed is
+enormous, and with the floor missing there was nothing to stop the result
+being a pass. Five per cent accuracy and a two-second run was a pass.
+
+**Why the snapshot and not the profile.** For the same reason as the rest of
+the rules (D4): editing a profile must not change how a result that has
+already been shown reads. The attempts that were stored before this change
+keep the floor they were taken under, which was none.
+
+## D22 — The telemetry a client sends is checked for plausibility
+
+**Decision.** Two checks run on every submission, on top of the server
+recomputing the score (D6):
+
+1. **The keystrokes must be able to have produced the text.** One key press
+   is worth at most four code points — in the Indic layouts a press can add
+   a virama and a consonant, and a matra adds a fourth character.
+2. **The time must be long enough to have typed the text.** At most a
+   hundred code points a second, which is about six times the world record
+   for sustained typing.
+
+A submission that fails either check is flagged `IMPOSSIBLE_TELEMETRY` and
+is not counted as a pass. The score itself is still shown.
+
+**Why.** Recomputing the score stops a client from *asserting* a result. It
+does not stop a client from *composing* the telemetry: a client that posts
+the whole passage as the typed text, and a single event with an offset of
+one millisecond, would otherwise be believed, and it would post a speed of
+twenty thousand words a minute. The check is what closes that.
+
+**What it is not.** It is a heuristic, not a proof. A determined forger can
+compose a plausible set of events. It is built to catch the crude
+forgeries — the ones a script produces — and the thresholds are deliberately
+generous, because a false accusation of cheating is worse than a missed
+forgery in a practice product. The limits are written down in
+`KNOWN_ISSUES.md`.
+
+**Why not fail the attempt outright.** The candidate is shown their score
+and their diff, which is what a practice product is for, and the flag is on
+the record for an administrator. The one thing a flagged attempt does not
+get is the pass.
+
+## D23 — A resumed attempt does not get a fresh clock
+
+**Decision.** The client records its event offsets from the start of the
+attempt, not from the moment the page was loaded. When the page is loaded
+for an attempt that is already running, the time the attempt had already
+been going is added to the count — both the time left on the clock and the
+offset of the first recorded key press.
+
+**Why.** The server derives the elapsed time from the recorded offsets
+(D14), and it trusts them because they are harder to forge than a
+duration. But a page load starts a new clock on the client, and the
+offsets after a reload were measured from that reload. A candidate could
+type for a while, reload the page, and type the passage again with the
+count starting from zero — and the server would see a short, fast attempt.
+
+The time already spent is taken from the server's own timestamps, so a
+candidate whose own clock is wrong does not get a wrong answer.
+
+**What it costs.** A resumed attempt is measured honestly, which means it
+is measured *worse* than before for a candidate who reloads: the time
+before the reload counts against them and the text they typed before it
+does not. That is the point. The typed text is not carried across a
+reload, so the events and the text still agree with each other, and the
+plausibility check in D22 is not tripped by the gap.
+
+## D24 — The rate limits are configuration, not constants
+
+**Decision.** The limits on registration, login, the password reset and the
+submission endpoint are read from the configuration, and each one has a
+default in the code that matches the limit the application has always had:
+five registrations in ten minutes, ten logins in five minutes, and so on.
+The environment variable for each is named after the endpoint, for example
+`RATE_LIMIT_REGISTER_REQUESTS` and `RATE_LIMIT_LOGIN_PERIOD`.
+
+**Why.** The limits were right for a deployment on the internet and wrong
+for a test run, and a test run that is told to slow down tests nothing
+except the rate limiter. With the limits in the configuration, the
+end-to-end suite raises them in its own Compose override and the ordinary
+deployment keeps them.
+
+**What it costs.** A misconfigured deployment can be left without a limit
+at all, because the variable name is not checked against the endpoint it
+belongs to. The defaults are in the code, so the safe setting is the one
+that happens when the variable is missing.
+
+## D26 — The demonstration accounts are seeded by the application
+
+**Decision.** The three demonstration accounts — an administrator, a free
+candidate and a candidate with a Pro subscription — are created by a
+seeding component when the application starts, and not by a script that
+has to be remembered. The seeding can be turned off with
+`SEED_DEMO_USERS=false`, and an account that already exists is left
+exactly as it is, so a password changed in the database is not undone by a
+restart.
+
+**Why.** The README had promised these accounts for a long time and no code
+created them, so the administrator could not sign in to a fresh
+deployment — and the end-to-end suite, which signs in as the
+administrator to approve a payment, could not run either. Seeding them in
+the application makes the promise true wherever the application runs,
+including in a container that was started without a script.
+
+**What it costs.** The seeding runs in every environment that has it
+switched on, which is the default. It creates three accounts and never
+touches an account that exists, so it is safe to leave on; the accounts
+are development accounts and the passwords come from the environment.

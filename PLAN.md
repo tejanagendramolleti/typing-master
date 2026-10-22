@@ -90,7 +90,7 @@ On-screen overlay renders the layout and highlights the expected next key.
 - [x] `application.yml` + profiles (dev/test/prod), env-driven
 - [x] Flyway `V1__init.sql` (full schema + indexes)
 - [x] `docker-compose.yml` (postgres, backend, frontend) + Dockerfiles
-- [ ] `scripts/verify.sh` harness (lint, backend test, frontend test, build, e2e) — non-zero on failure
+- [x] `scripts/verify.sh` harness (lint, backend test, frontend test, build, e2e) — non-zero on failure
 - [x] Common: error envelope, request-ID filter, health/actuator
 
 ### Phase 2 — Scoring engine + exam profiles
@@ -102,7 +102,7 @@ On-screen overlay renders the layout and highlights the expected next key.
 ### Phase 3 — Auth, users, roles, security
 - [x] Register / login / refresh / logout / password reset
 - [x] JWT access+refresh, BCrypt, role-based access
-- [~] Rate limiting on auth + submit, CORS via env, secure headers
+- [x] Rate limiting on auth + submit, CORS via env, secure headers
 - [x] `MailSender` interface + console implementation
 - [x] Profile preferences (exam, language, target WPM)
 
@@ -125,36 +125,50 @@ On-screen overlay renders the layout and highlights the expected next key.
 - [x] ≥30 mapping tests per layout
 
 ### Phase 7 — Results, analytics, drills, PDF, certificates
-- [ ] WPM/accuracy trends, weak-key + weak-word analysis, missed words, time-of-day
-- [ ] Smart practice drill generator (algorithmic; `AI_ENABLED=false` mock LLM mode)
-- [ ] PDF result report + verifiable certificate (public verify URL)
+- [x] WPM/accuracy trends, weak-key + weak-word analysis, missed words, time-of-day
+- [x] Smart practice drill generator (algorithmic; `AI_ENABLED=false` mock LLM mode)
+- [x] PDF result report + verifiable certificate (public verify URL)
 
 ### Phase 8 — Billing (provider-agnostic)
-- [ ] `PaymentGateway` interface: `createOrder`, `verifyPayment`, `handleWebhook`
-- [ ] `MockPaymentGateway` (dev only) + `ManualGateway` (UPI ref + admin approve)
-- [ ] Plans, coupons, orders, payments, subscriptions, invoices
-- [ ] Quota enforcement, server-side gating, idempotent activation, expiry job, renewal reminders
-- [ ] `PAYMENTS_MODE=disabled` → waitlist capture
-- [ ] `docs/ADDING_RAZORPAY.md`
+- [x] `PaymentGateway` interface: `createOrder`, `verifyPayment`, `handleWebhook`
+- [x] `MockPaymentGateway` (dev only) + `ManualGateway` (UPI ref + admin approve)
+- [x] Plans, coupons, orders, payments, subscriptions, invoices
+- [x] Quota enforcement, server-side gating, idempotent activation, expiry job, renewal reminders
+- [x] `PAYMENTS_MODE=disabled` → waitlist capture
+- [x] `docs/ADDING_RAZORPAY.md`
 
 ### Phase 9 — Leaderboard, admin panel, import
-- [ ] Weekly + all-time leaderboards, privacy names, opt-out
-- [ ] Admin: passage/exam/plan/coupon CRUD, users, KPIs
-- [ ] CSV/JSON bulk import with validation + dry-run preview
+- [x] Weekly + all-time leaderboards, privacy names, opt-out
+- [x] Admin: passage/exam/plan/coupon CRUD, users, KPIs
+- [x] CSV/JSON bulk import with validation + dry-run preview
 
 ### Phase 10 — E2E, polish, docs, final verification
-- [ ] 6 Playwright flows from the brief
-- [ ] Accessibility + responsive pass
-- [ ] `README.md`, `DEPLOY.md`, `THIRD_PARTY.md`, `DECISIONS.md`, `KNOWN_ISSUES.md`
-- [ ] `./scripts/verify.sh` fully green
+- [x] 6 Playwright flows from the brief
+- [x] Accessibility + responsive pass
+- [x] `README.md`, `DEPLOY.md`, `THIRD_PARTY.md`, `DECISIONS.md`, `KNOWN_ISSUES.md`
+- [x] `./scripts/verify.sh` fully green
+
+### Phase 11 — The score the candidate is actually marked against
+- [x] The accuracy floor is snapshotted onto the attempt and enforced (DECISIONS.md D21)
+- [x] The submitted telemetry is checked for plausibility (DECISIONS.md D22)
+- [x] The health endpoints are reachable without a session, and the probes exist
+- [x] Both containers report themselves healthy, and stay healthy
+- [x] The rate limits are configuration, not constants (DECISIONS.md D24)
+- [x] The three demonstration accounts are created by the application (DECISIONS.md D26)
+- [x] The on-screen keyboard shows the sign on the number row of the Indic layouts
+- [x] The admin panel no longer takes the whole page down
+- [x] A failure in the interface is shown, not a blank page
+- [x] The end-to-end suite starts the whole application itself
+- [x] `scripts/verify.sh` runs on a machine with no `JAVA_HOME` set
+
 
 ## 6. Definition of Done (from brief §9)
 
-- [ ] `docker compose up --build` runs the whole app (UI :3000, API :8080)
-- [ ] `./scripts/verify.sh` fully green
-- [ ] Free/Pro gating enforced server-side
-- [ ] EN, HI Inscript, HI Kruti Dev, TE Inscript work end-to-end with correct scoring
-- [ ] Mock + manual billing work; no Razorpay code; `docs/ADDING_RAZORPAY.md` written
-- [ ] Seed data validated; admin + demo accounts work
-- [ ] Docs complete and accurate
-- [ ] Clean git history, one commit per phase
+- [x] `docker compose up --build` runs the whole app (UI :3000, API :8080)
+- [x] `./scripts/verify.sh` fully green
+- [x] Free/Pro gating enforced server-side
+- [x] EN, HI Inscript, HI Kruti Dev, TE Inscript work end-to-end with correct scoring
+- [x] Mock + manual billing work; no Razorpay code; `docs/ADDING_RAZORPAY.md` written
+- [x] Seed data validated; admin + demo accounts work
+- [x] Docs complete and accurate
+- [x] Clean git history, one commit per phase

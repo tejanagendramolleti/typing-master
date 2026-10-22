@@ -69,6 +69,16 @@ public class Attempt {
     @Column(name = "passing_net_wpm", nullable = false, precision = 6, scale = 2)
     private BigDecimal passingNetWpm = BigDecimal.ZERO;
 
+    /**
+     * The accuracy floor the exam required, snapshotted at start time.
+     *
+     * <p>It has to be on the attempt rather than looked up from the profile at
+     * scoring time, for the same reason the rest of the rules are: a later
+     * change to the profile must not change how a stored result reads.
+     */
+    @Column(name = "min_accuracy_pct", nullable = false, precision = 5, scale = 2)
+    private BigDecimal minAccuracyPct = BigDecimal.ZERO;
+
     @Column(name = "backspace_allowed", nullable = false)
     private boolean backspaceAllowed = true;
 
@@ -261,6 +271,14 @@ public class Attempt {
 
     public void setPassingNetWpm(BigDecimal passingNetWpm) {
         this.passingNetWpm = passingNetWpm;
+    }
+
+    public BigDecimal getMinAccuracyPct() {
+        return minAccuracyPct;
+    }
+
+    public void setMinAccuracyPct(BigDecimal minAccuracyPct) {
+        this.minAccuracyPct = minAccuracyPct;
     }
 
     public boolean isBackspaceAllowed() {

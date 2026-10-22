@@ -84,11 +84,24 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+      probes:
+        # The container's health check uses the readiness probe, so the
+        # probe groups have to be switched on for it to exist.
+        enabled: true
   health:
     livenessstate:
       enabled: true
     readinessstate:
       enabled: true
+    db:
+      enabled: true
+    # The mail indicator tries to open a connection to the SMTP server on
+    # every health check. There is no SMTP server in the default
+    # deployment — the mail goes to the log — so the indicator would
+    # report the whole application as unhealthy. It is turned off unless
+    # the SMTP host is actually configured.
+    mail:
+      enabled: false
 
 logging:
   level:
@@ -125,3 +138,25 @@ app:
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
     api-base-url: ${API_BASE_URL:http://localhost:8080}
+  # The rate limits. The defaults are the ones the application has always
+  # used; an operator can raise them for a place where many candidates
+  # share one address, and lower them for one that does not.
+  rate-limit:
+    login:
+      requests: ${RATE_LIMIT_LOGIN_REQUESTS:10}
+      period: ${RATE_LIMIT_LOGIN_PERIOD:5m}
+    register:
+      requests: ${RATE_LIMIT_REGISTER_REQUESTS:5}
+      period: ${RATE_LIMIT_REGISTER_PERIOD:10m}
+    forgot-password:
+      requests: ${RATE_LIMIT_FORGOT_PASSWORD_REQUESTS:5}
+      period: ${RATE_LIMIT_FORGOT_PASSWORD_PERIOD:10m}
+    reset-password:
+      requests: ${RATE_LIMIT_RESET_PASSWORD_REQUESTS:10}
+      period: ${RATE_LIMIT_RESET_PASSWORD_PERIOD:10m}
+    refresh:
+      requests: ${RATE_LIMIT_REFRESH_REQUESTS:60}
+      period: ${RATE_LIMIT_REFRESH_PERIOD:5m}
+    submit:
+      requests: ${RATE_LIMIT_SUBMIT_REQUESTS:120}
+      period: ${RATE_LIMIT_SUBMIT_PERIOD:5m}

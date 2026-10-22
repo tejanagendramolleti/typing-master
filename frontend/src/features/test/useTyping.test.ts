@@ -215,4 +215,38 @@ describe('useTyping', () => {
     expect(onExpire).not.toHaveBeenCalled()
     vi.useRealTimers()
   })
+
+  it('does not give a resumed attempt the whole time again', () => {
+    // The attempt has already been running for half a minute, so half of
+    // the minute is left rather than the whole minute.
+    const { result } = renderTyping({ durationMs: 60_000, initialElapsedMs: 30_000 })
+
+    expect(result.current.remainingMs).toBe(30_000)
+  })
+
+  it('records the events of a resumed attempt from the start of the attempt', () => {
+    // The offsets are measured from the start of the attempt, not from the
+    // moment the page was loaded, so a reload cannot shorten the test.
+    const { result } = renderTyping({ durationMs: 60_000, initialElapsedMs: 30_000 })
+
+    act(() => {
+      result.current.handleKey(keyEvent('KeyT'))
+    })
+
+    expect(result.current.events[0].offsetMs).toBeGreaterThanOrEqual(30_000)
+  })
+
+  it('expires a resumed attempt when the remaining time runs out', () => {
+    vi.useFakeTimers()
+    const onExpire = vi.fn()
+    const { result } = renderTyping({ durationMs: 60_000, initialElapsedMs: 55_000, onExpire })
+
+    act(() => {
+      vi.advanceTimersByTime(6_000)
+    })
+
+    expect(result.current.isExpired).toBe(true)
+    expect(onExpire).toHaveBeenCalled()
+    vi.useRealTimers()
+  })
 })

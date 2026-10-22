@@ -95,11 +95,13 @@ export default function PricingPage() {
                 {formatPrice(plan.pricePaise, plan.currency)}
               </span>
               <span className="text-sm text-ink-500 dark:text-ink-400">
-                {plan.periodDays === 365
+                {plan.durationDays === 365
                   ? 'a year'
-                  : plan.periodDays === 90
+                  : plan.durationDays === 90
                     ? 'a quarter'
-                    : 'a month'}
+                    : plan.durationDays === 0
+                      ? 'always free'
+                      : 'a month'}
               </span>
             </div>
 

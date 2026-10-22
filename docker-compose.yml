@@ -57,7 +57,7 @@ services:
     ports:
       - "${API_PORT:-8080}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health/readiness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -67,13 +67,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # Vite inlines this into the bundle, so it is a build argument and
+        # not an environment variable on the running container.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
     container_name: examtyper-web
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
     ports:
       - "${FRONTEND_PORT:-3000}:80"
 

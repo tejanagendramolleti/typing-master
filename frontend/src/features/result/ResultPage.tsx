@@ -35,6 +35,27 @@ const ERROR_LABELS: Record<ErrorType, string> = {
   SPACING: 'Wrong spacing',
 }
 
+/** The label shown for each anti-cheat signal. */
+const CHEAT_FLAG_LABELS: Record<string, string> = {
+  PASTE_ATTEMPT: 'a paste',
+  DROP_ATTEMPT: 'a drop',
+  COPY_ATTEMPT: 'a copy',
+  CONTEXT_MENU: 'the context menu',
+  BLUR: 'leaving the tab',
+  IMPOSSIBLE_TELEMETRY: 'a result that could not have been typed',
+}
+
+/**
+ * Turns a flag into a phrase.
+ *
+ * The flags come with their counts attached — `PASTE_ATTEMPT:2` — so the
+ * count is dropped before the name is looked up.
+ */
+function describeFlag(flag: string): string {
+  const name = flag.split(':')[0]
+  return CHEAT_FLAG_LABELS[name] ?? name.replace(/_/g, ' ').toLowerCase()
+}
+
 /**
  * The result page.
  *
@@ -83,6 +104,13 @@ export default function ResultPage() {
   const minutes = Math.floor(result.durationMs / 60_000)
   const seconds = Math.round((result.durationMs % 60_000) / 1000)
 
+  // The telemetry check is the one flag that changes the result rather than
+  // just recording something, so it gets its own sentence.
+  const impossibleTelemetry = result.cheatFlags.some(
+    (flag) => flag.split(':')[0] === 'IMPOSSIBLE_TELEMETRY',
+  )
+  const describedFlags = result.cheatFlags.map(describeFlag)
+
   return (
     <div className="container-page py-12">
       {/* ---- The verdict ---- */}
@@ -94,8 +122,8 @@ export default function ResultPage() {
           </h1>
           <p className="text-muted mt-2">
             {result.passed
-              ? `You cleared the ${result.passingNetWpm} wpm bar and the accuracy floor.`
-              : `You needed ${result.passingNetWpm} wpm. You reached ${result.netWpm}.`}
+              ? `You cleared the ${result.passingNetWpm} wpm bar and the ${result.minAccuracyPct}% accuracy floor.`
+              : `To pass you needed ${result.passingNetWpm} wpm and ${result.minAccuracyPct}% accuracy. You reached ${result.netWpm} wpm and ${result.accuracyPct.toFixed(1)}% accuracy.`}
           </p>
         </div>
         <Badge tone={result.passed ? 'good' : 'warn'}>
@@ -150,8 +178,17 @@ export default function ResultPage() {
       {result.cheatFlags.length > 0 && (
         <div className="mb-6">
           <Banner tone="warn" title="This test was flagged">
-            The attempt to {result.cheatFlags.join(', ').replace(/_/g, ' ').toLowerCase()} was
-            recorded. It does not change your score, but it is on the record.
+            {impossibleTelemetry ? (
+              <>
+                The timing of this test could not have been produced by typing, so the
+                result was not counted as a pass.
+              </>
+            ) : (
+              <>
+                The attempt to {describedFlags.join(', ')} was recorded. It does not change
+                your score, but it is on the record.
+              </>
+            )}
           </Banner>
         </div>
       )}

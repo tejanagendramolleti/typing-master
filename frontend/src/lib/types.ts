@@ -83,6 +83,7 @@ export interface AttemptSummary {
   backspaceAllowed: boolean
   showLiveWpm: boolean
   passingNetWpm: number
+  minAccuracyPct: number
   typedText: string
   keystrokeCount: number
   backspaceCount: number
@@ -112,6 +113,7 @@ export interface AttemptResult {
   correctWords: number
   passed: boolean
   passingNetWpm: number
+  minAccuracyPct: number
   startedAt: string
   submittedAt: string
   typedText: string
@@ -161,10 +163,13 @@ export interface SubmitAttemptRequest {
 export interface Plan {
   code: string
   name: string
-  description: string
+  description: string | null
   pricePaise: number
   currency: string
-  periodDays: number
+  /** How long the plan runs for, in days. */
+  durationDays: number
+  /** FREE, MONTHLY, QUARTERLY, YEARLY or LIFETIME. */
+  interval: string
   features: string[]
   highlighted: boolean
   active: boolean
@@ -175,4 +180,13 @@ export interface PlanCatalogue {
   plans: Plan[]
   paymentsEnabled: boolean
   mode: string
+}
+
+/** A page of results, as the server sends them. */
+export interface Page<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
 }

@@ -30,6 +30,7 @@ const RESULT: AttemptResult = {
   correctWords: 205,
   passed: true,
   passingNetWpm: 35,
+  minAccuracyPct: 90,
   startedAt: '2026-01-01T10:00:00Z',
   submittedAt: '2026-01-01T10:02:05Z',
   typedText: 'the quick brown fox jumps over the lazy dog',
@@ -112,6 +113,22 @@ describe('ResultPage', () => {
     expect(screen.getByText('Not this time')).toBeInTheDocument()
   })
 
+  it('says what the accuracy floor was when the candidate did not pass', async () => {
+    await renderResult({ ...RESULT, passed: false, netWpm: 22, accuracyPct: 71.5 })
+    expect(
+      screen.getByText(
+        'To pass you needed 35 wpm and 90% accuracy. You reached 22 wpm and 71.5% accuracy.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('names the accuracy floor in the verdict when the candidate passed', async () => {
+    await renderResult()
+    expect(
+      screen.getByText('You cleared the 35 wpm bar and the 90% accuracy floor.'),
+    ).toBeInTheDocument()
+  })
+
   it('shows the net speed', async () => {
     await renderResult()
     expect(screen.getByText('38')).toBeInTheDocument()
@@ -154,6 +171,18 @@ describe('ResultPage', () => {
   it('flags a test that had a cheat attempt', async () => {
     await renderResult({ ...RESULT, cheatFlags: ['PASTE_ATTEMPT'] })
     expect(screen.getByText('This test was flagged')).toBeInTheDocument()
+  })
+
+  it('explains a result whose timing could not have been typed', async () => {
+    await renderResult({ ...RESULT, passed: false, cheatFlags: ['IMPOSSIBLE_TELEMETRY'] })
+    expect(
+      screen.getByText(/could not have been produced by typing/),
+    ).toBeInTheDocument()
+  })
+
+  it('does not say the score was changed for an ordinary cheat attempt', async () => {
+    await renderResult({ ...RESULT, cheatFlags: ['PASTE_ATTEMPT:2'] })
+    expect(screen.getByText(/does not change your score/)).toBeInTheDocument()
   })
 
   it('does not flag a clean test', async () => {

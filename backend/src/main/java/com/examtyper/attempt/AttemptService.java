@@ -111,6 +111,7 @@ public class AttemptService {
         attempt.setErrorModel(profile.getErrorModel());
         attempt.setErrorPenaltyPerUnit(profile.getErrorPenaltyPerUnit());
         attempt.setPassingNetWpm(profile.getPassingNetWpm());
+        attempt.setMinAccuracyPct(profile.getMinAccuracyPct());
         attempt.setBackspaceAllowed(profile.isBackspaceAllowed());
         attempt.setShowLiveWpm(profile.isShowLiveWpm());
         attempt.setReferenceText(passage.getContent());
@@ -188,13 +189,16 @@ public class AttemptService {
         int blurs = countType(events, AttemptEventType.BLUR);
 
         // ---- Recompute the score ------------------------------------------
+        // The rules come from the attempt's own snapshot, not from the exam
+        // profile. The profile may have been edited since the test started,
+        // and a stored result has to keep the rules it was taken under.
         ScoringRules rules = new ScoringRules(
                 attempt.getDurationSeconds(),
                 attempt.getWordLengthChars(),
                 attempt.getErrorModel(),
                 attempt.getErrorPenaltyPerUnit() == null ? 1.0d : attempt.getErrorPenaltyPerUnit().doubleValue(),
                 attempt.getPassingNetWpm() == null ? 0.0d : attempt.getPassingNetWpm().doubleValue(),
-                0.0d,
+                attempt.getMinAccuracyPct() == null ? 0.0d : attempt.getMinAccuracyPct().doubleValue(),
                 attempt.isBackspaceAllowed());
 
         ScoreResult result = scoringEngine.score(
@@ -224,6 +228,19 @@ public class AttemptService {
         attempt.setScoreJson(writeScoreJson(result));
 
         List<String> cheatFlags = collectCheatFlags(events);
+
+        // The telemetry is checked for plausibility before the result is
+        // accepted as a pass. A client that posts the whole passage and a
+        // single one-millisecond event would otherwise post a speed no person
+        // could reach, and would be believed.
+        AttemptIntegrity.Verdict integrity =
+                AttemptIntegrity.check(result.typedChars(), keystrokes, elapsedMs);
+        if (!integrity.consistent()) {
+            log.warn("Attempt {} has implausible telemetry: {}", attemptId, integrity.reason());
+            cheatFlags.add("IMPOSSIBLE_TELEMETRY");
+            attempt.setPassed(false);
+        }
+
         attempt.setCheatFlags(String.join(",", cheatFlags));
 
         attemptRepository.save(attempt);
@@ -242,7 +259,7 @@ public class AttemptService {
         }
 
         log.info("Submitted attempt {} for user {}: net {} WPM, accuracy {}%, passed {}",
-                attemptId, userId, result.netWpm(), result.accuracyPct(), result.passed());
+                attemptId, userId, result.netWpm(), result.accuracyPct(), attempt.getPassed());
 
         AttemptResultResponse response = toResultResponse(attempt);
         return new AttemptResultResponse(
@@ -252,6 +269,7 @@ public class AttemptService {
                 response.totalMistakes(), response.keystrokes(), response.backspaces(),
                 response.blurCount(), response.durationMs(), response.typedChars(), response.referenceWords(),
                 response.typedWords(), response.correctWords(), response.passed(), response.passingNetWpm(),
+                response.minAccuracyPct(),
                 response.startedAt(), response.submittedAt(), response.typedText(), response.referenceText(),
                 response.wordDiffs(), response.errorBreakdown(), cheatFlags, certificateId);
     }
@@ -461,6 +479,7 @@ public class AttemptService {
                 attempt.isBackspaceAllowed(),
                 attempt.isShowLiveWpm(),
                 attempt.getPassingNetWpm() == null ? 0.0d : attempt.getPassingNetWpm().doubleValue(),
+                attempt.getMinAccuracyPct() == null ? 0.0d : attempt.getMinAccuracyPct().doubleValue(),
                 attempt.getTypedText(),
                 attempt.getKeystrokeCount(),
                 attempt.getBackspaceCount());
@@ -510,6 +529,7 @@ public class AttemptService {
                 stored == null ? 0 : stored.correctWords(),
                 Boolean.TRUE.equals(attempt.getPassed()),
                 attempt.getPassingNetWpm() == null ? 0.0d : attempt.getPassingNetWpm().doubleValue(),
+                attempt.getMinAccuracyPct() == null ? 0.0d : attempt.getMinAccuracyPct().doubleValue(),
                 attempt.getStartedAt(),
                 attempt.getSubmittedAt(),
                 attempt.getTypedText(),
