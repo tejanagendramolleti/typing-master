@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Badge, Banner, Card, EmptyState, LoadingState, PageHeader } from '../../components/ui'
 import { get, patch, post } from '../../lib/api'
 import type { ExamProfile, Page } from '../../lib/types'
+import AdminOrders from './AdminOrders'
 
 /** One passage in the admin list. */
 interface AdminPassage {
@@ -33,7 +34,7 @@ interface AdminStats {
  * takes a CSV or a JSON file and shows what it would do before it does it.
  */
 export default function AdminPage() {
-  const [tab, setTab] = useState<'passages' | 'exams' | 'stats'>('passages')
+  const [tab, setTab] = useState<'passages' | 'exams' | 'orders' | 'stats'>('passages')
   const [importText, setImportText] = useState('')
   const [importFormat, setImportFormat] = useState<'json' | 'csv'>('json')
 
@@ -109,6 +110,7 @@ export default function AdminPage() {
           [
             ['passages', 'Passages'],
             ['exams', 'Exam profiles'],
+            ['orders', 'Orders'],
             ['stats', 'Summary'],
           ] as const
         ).map(([code, label]) => (
@@ -299,6 +301,8 @@ export default function AdminPage() {
           </div>
         </Card>
       )}
+
+      {tab === 'orders' && <AdminOrders />}
 
       {tab === 'stats' && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

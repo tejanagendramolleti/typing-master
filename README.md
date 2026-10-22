@@ -112,7 +112,7 @@ whole list; the ones that matter most are these.
 | `APP_ENV` | `dev`, `test` or `prod`. In `prod` the test payment gateway refuses to take a payment. | `dev` |
 | `JWT_SECRET` | The signing key for the access tokens. At least 32 characters. | a development key |
 | `APP_CORS_ALLOWED_ORIGINS` | The origins the API accepts, comma separated. | `http://localhost:3000` |
-| `PAYMENTS_MODE` | `mock`, `manual` or `disabled`. See below. | `mock` |
+| `PAYMENTS_MODE` | `mock`, `manual`, `both` or `disabled`. See below. | `mock` |
 | `MAIL_MODE` | `console` writes the emails to the log. | `console` |
 | `AI_ENABLED` | Turns on the optional language-model drill phrasing. | `false` |
 | `SPRING_DATASOURCE_URL` | The database. | the Docker Compose one |
@@ -129,6 +129,7 @@ without touching anything above it.
 |---|---|
 | `mock` | The candidate presses a "Pay (test)" button and the subscription is activated. Available in every environment except `prod`, where the gateway refuses. |
 | `manual` | The candidate pays by UPI, gives the transaction reference, and an administrator approves it in the admin panel. A real workflow, with no provider. |
+| `both` | Both of the methods are on offer and the candidate chooses one at the checkout. The end-to-end suite runs in this mode, because it drives both flows. |
 | `disabled` | The pricing page shows a waitlist form instead of a checkout, and every order is refused. |
 
 See [`docs/ADDING_RAZORPAY.md`](docs/ADDING_RAZORPAY.md) for how to add a
@@ -258,8 +259,9 @@ fail.
 The end-to-end tests start the whole application themselves, with
 `docker-compose.e2e.yml` laid over `docker-compose.yml`. The override
 raises the rate limits, because every test registers a new candidate from
-the same address, and it changes nothing else. The ordinary deployment
-keeps the limits in `docker-compose.yml` and the mode in `application.yml`.
+the same address, and it puts the application in `PAYMENTS_MODE=both`,
+because the suite drives both payment flows. The ordinary deployment keeps
+the limits in `docker-compose.yml` and the mode in `application.yml`.
 
 The backend's integration tests need Docker, because they run against a
 real PostgreSQL started by Testcontainers. The unit tests do not.

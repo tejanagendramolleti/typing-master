@@ -1,8 +1,11 @@
 package com.examtyper.billing.service;
 
 import com.examtyper.billing.PaymentGateway;
+import com.examtyper.billing.PaymentGatewayRegistry;
+import com.examtyper.billing.dto.AdminOrderResponse;
 import com.examtyper.billing.dto.CreateOrderRequest;
 import com.examtyper.billing.dto.CreateOrderResult;
+import com.examtyper.billing.dto.OrderResponse;
 import com.examtyper.billing.dto.PaymentVerification;
 import com.examtyper.billing.entity.Coupon;
 import com.examtyper.billing.entity.CouponRedemption;
@@ -63,7 +66,7 @@ public class BillingService {
     private final CouponRedemptionRepository couponRedemptionRepository;
     private final InvoiceRepository invoiceRepository;
     private final UserRepository userRepository;
-    private final PaymentGateway gateway;
+    private final PaymentGatewayRegistry gateways;
 
     public BillingService(PlanRepository planRepository,
                           OrderRepository orderRepository,
@@ -73,7 +76,7 @@ public class BillingService {
                           CouponRedemptionRepository couponRedemptionRepository,
                           InvoiceRepository invoiceRepository,
                           UserRepository userRepository,
-                          PaymentGateway gateway) {
+                          PaymentGatewayRegistry gateways) {
         this.planRepository = planRepository;
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
@@ -82,7 +85,7 @@ public class BillingService {
         this.couponRedemptionRepository = couponRedemptionRepository;
         this.invoiceRepository = invoiceRepository;
         this.userRepository = userRepository;
-        this.gateway = gateway;
+        this.gateways = gateways;
     }
 
     // ---- The catalogue ---------------------------------------------------
@@ -147,7 +150,7 @@ public class BillingService {
     // ---- Creating an order ------------------------------------------------
 
     /**
-     * Creates an order for a plan.
+     * Creates an order for a plan, with the deployment's default method.
      *
      * @param userId     the buyer
      * @param planCode   the plan being bought
@@ -155,6 +158,22 @@ public class BillingService {
      */
     @Transactional
     public Order createOrder(Long userId, String planCode, String couponCode, String idempotencyKey) {
+        return createOrder(userId, planCode, couponCode, idempotencyKey, null);
+    }
+
+    /**
+     * Creates an order for a plan, with the method the candidate chose.
+     *
+     * @param userId         the buyer
+     * @param planCode       the plan being bought
+     * @param couponCode     the coupon code, when one was given
+     * @param idempotencyKey the key that makes the request idempotent
+     * @param paymentMethod  the method to pay by — {@code MOCK} or
+     *                       {@code MANUAL} — or nothing for the default
+     */
+    @Transactional
+    public Order createOrder(Long userId, String planCode, String couponCode, String idempotencyKey,
+                             String paymentMethod) {
         Plan plan = findPlan(planCode);
         if (!plan.isActive()) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "That plan is not available.");
@@ -163,6 +182,10 @@ public class BillingService {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED,
                     "The free plan does not need an order.");
         }
+
+        // The method is resolved first, so that a deployment with payments
+        // switched off says so before anything is written.
+        PaymentGateway gateway = gateways.require(paymentMethod);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("No such user."));
@@ -346,6 +369,13 @@ public class BillingService {
         if (!order.getUserId().equals(userId)) {
             throw new com.examtyper.common.error.AccessDeniedException("That order belongs to someone else.");
         }
+        if (!PaymentGatewayRegistry.MOCK.equals(order.getProvider())) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED,
+                    "That order was not made with the test method.");
+        }
+        PaymentGateway gateway = gateways.find(order.getProvider())
+                .orElseThrow(() -> new BusinessException(ErrorCode.VALIDATION_FAILED,
+                        "Test payments are not available here."));
         if (!gateway.isAvailable()) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED,
                     "Test payments are not available here.");
@@ -464,6 +494,38 @@ public class BillingService {
         return subscriptionRepository
                 .findActiveSubscription(userId, Instant.now())
                 .isPresent();
+    }
+
+    // ---- The views --------------------------------------------------------
+
+    /**
+     * The candidate's view of an order.
+     *
+     * <p>The plan's code and name are filled in here, because the order
+     * only holds the plan's number. The lookup happens inside the
+     * transaction, so the caller gets a plain object with no lazy
+     * loading to trip over.
+     */
+    @Transactional(readOnly = true)
+    public OrderResponse toResponse(Order order) {
+        Plan plan = planRepository.findById(order.getPlanId()).orElse(null);
+        return OrderResponse.from(order, plan);
+    }
+
+    /**
+     * The administrator's view of an order.
+     *
+     * <p>The candidate's email is filled in here, because the
+     * administrator is matching the order against a bank statement and
+     * needs to know whose payment it is.
+     */
+    @Transactional(readOnly = true)
+    public AdminOrderResponse toAdminResponse(Order order) {
+        Plan plan = planRepository.findById(order.getPlanId()).orElse(null);
+        String email = userRepository.findById(order.getUserId())
+                .map(User::getEmail)
+                .orElse(null);
+        return AdminOrderResponse.from(order, email, plan == null ? null : plan.getName());
     }
 
     // ---- The helper methods -----------------------------------------------

@@ -150,6 +150,14 @@ class BillingFlowTest extends PostgresIntegrationTest {
                 .isInstanceOf(com.examtyper.common.error.NotFoundException.class);
     }
 
+    @Test
+    @DisplayName("the manual method is refused when the deployment offers only the test one")
+    void theManualMethodIsRefusedWhenTheDeploymentOffersOnlyTheTestOne() {
+        assertThatThrownBy(() -> billingService.createOrder(candidateId, "PRO-MONTHLY", null, null, "MANUAL"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("not available");
+    }
+
     // ---- Paying ----------------------------------------------------------
 
     @Test

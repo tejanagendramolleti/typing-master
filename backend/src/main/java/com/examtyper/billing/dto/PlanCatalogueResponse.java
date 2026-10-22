@@ -8,10 +8,13 @@ import java.util.List;
  * @param plans           the plans on offer
  * @param paymentsEnabled true when a gateway is available
  * @param mode            the mode the application is running in
+ * @param methods         the payment methods on offer — {@code MOCK},
+ *                        {@code MANUAL}, or both
  */
 public record PlanCatalogueResponse(
         List<PlanResponse> plans,
         boolean paymentsEnabled,
-        String mode
+        String mode,
+        List<String> methods
 ) {
 }

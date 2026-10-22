@@ -6,7 +6,6 @@ import com.examtyper.billing.dto.PaymentVerification;
 import com.examtyper.billing.dto.WebhookResult;
 import com.examtyper.common.error.BusinessException;
 import com.examtyper.common.error.ErrorCode;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -14,13 +13,12 @@ import java.util.Map;
 /**
  * The gateway used when payments are switched off.
  *
- * <p>It exists so that the application always has exactly one
- * {@link PaymentGateway} bean and the wiring never depends on the
- * configuration. Every method refuses, and the pricing page shows a
- * waitlist form instead of a checkout.
+ * <p>It exists so that the wiring never depends on the configuration: every
+ * gateway is registered, and {@link PaymentGatewayRegistry} decides which
+ * of them the deployment offers. Every method here refuses, and the
+ * pricing page shows a waitlist form instead of a checkout.
  */
 @Component
-@ConditionalOnProperty(name = "app.payments.mode", havingValue = "disabled", matchIfMissing = true)
 public class DisabledPaymentGateway implements PaymentGateway {
 
     /** The provider name stored on the order. */

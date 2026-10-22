@@ -6,7 +6,6 @@ import com.examtyper.billing.dto.PaymentVerification;
 import com.examtyper.billing.dto.WebhookResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -24,9 +23,12 @@ import java.util.UUID;
  *
  * <p>This is a real workflow rather than a mock: the money genuinely moves,
  * and the only thing the application does not do is talk to a bank.
+ *
+ * <p>Which gateways a deployment offers is decided by
+ * {@link PaymentGatewayRegistry}, so this one is registered whatever the
+ * mode says and simply left out when it is not wanted.
  */
 @Component
-@ConditionalOnProperty(name = "app.payments.mode", havingValue = "manual")
 public class ManualGateway implements PaymentGateway {
 
     private static final Logger log = LoggerFactory.getLogger(ManualGateway.class);

@@ -20,6 +20,14 @@ public record CreateOrderRequestDto(
          * the button twice on a slow connection.
          */
         @Size(max = 80)
-        String idempotencyKey
+        String idempotencyKey,
+
+        /**
+         * The payment method the candidate chose — {@code MOCK} for the
+         * development gateway or {@code MANUAL} for the UPI method. When
+         * it is left out, the deployment's default method is used.
+         */
+        @Size(max = 30)
+        String paymentMethod
 ) {
 }

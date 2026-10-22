@@ -1,6 +1,7 @@
 package com.examtyper.billing.dto;
 
 import com.examtyper.billing.entity.Order;
+import com.examtyper.billing.entity.Plan;
 
 import java.time.Instant;
 
@@ -23,12 +24,18 @@ public record OrderResponse(
         Instant createdAt,
         Instant expiresAt
 ) {
-    public static OrderResponse from(Order order) {
+    /**
+     * The view of an order.
+     *
+     * @param order the order
+     * @param plan  the plan it was made for, when it is still known
+     */
+    public static OrderResponse from(Order order, Plan plan) {
         return new OrderResponse(
                 order.getId(),
                 order.getOrderNumber(),
-                null,
-                null,
+                plan == null ? null : plan.getCode(),
+                plan == null ? null : plan.getName(),
                 order.getProvider(),
                 order.getStatus(),
                 order.getAmountPaise(),

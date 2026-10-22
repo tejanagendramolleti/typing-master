@@ -29,13 +29,20 @@ public record AdminOrderResponse(
         Instant createdAt,
         Instant reviewedAt
 ) {
-    public static AdminOrderResponse from(Order order) {
+    /**
+     * The administrator's view of an order.
+     *
+     * @param order     the order
+     * @param userEmail the candidate's email address
+     * @param planName  the name of the plan that was bought
+     */
+    public static AdminOrderResponse from(Order order, String userEmail, String planName) {
         return new AdminOrderResponse(
                 order.getId(),
                 order.getOrderNumber(),
                 order.getUserId(),
-                null,
-                null,
+                userEmail,
+                planName,
                 order.getProvider(),
                 order.getStatus(),
                 order.getAmountPaise(),

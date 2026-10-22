@@ -59,7 +59,7 @@ public class AdminBillingController {
                 ? billingService.listAllOrders(pageable)
                 : billingService.listOrdersByStatus(status, pageable);
 
-        return ResponseEntity.ok(orders.map(AdminOrderResponse::from));
+        return ResponseEntity.ok(orders.map(billingService::toAdminResponse));
     }
 
     @PostMapping("/orders/{orderId}/approve")
@@ -80,6 +80,6 @@ public class AdminBillingController {
             @Valid @RequestBody ApproveOrderRequest request) {
 
         Order order = billingService.rejectManualOrder(orderId, CurrentUser.requireId(), request.note());
-        return ResponseEntity.ok(OrderResponse.from(order));
+        return ResponseEntity.ok(billingService.toResponse(order));
     }
 }

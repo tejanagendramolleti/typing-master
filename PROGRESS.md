@@ -489,3 +489,66 @@ bar and still fails the accuracy floor, and the forged run that is flagged.
 **8 new interface tests** — for the resumed attempt's clock, the number row
 of the two Indic layouts, and the result page's account of a flagged
 attempt.
+
+---
+
+## Phase 12 — The billing front end
+
+**Status: complete**
+
+The billing layer was finished in Phase 8, but nothing on the screen
+answered to it. The pricing page had a list of plans and a button, and the
+button went nowhere. The administrator's order list was not on the screen
+either, so an order made by the UPI method could only be approved by
+calling the API by hand.
+
+**What was built**
+
+- **The checkout.** `frontend/src/features/pricing/CheckoutPanel.tsx` is
+  a three-step panel: the candidate picks the method, the order is created
+  with that method on it, and the settlement happens. With the test method
+  the order is settled by pressing a button and the Pro access is on by
+  the time the panel says so. With the UPI method the candidate types the
+  transaction reference and the panel says it has been sent, and the
+  order waits for an administrator.
+- **The administrator's orders.** `frontend/src/features/admin/AdminOrders.tsx`
+  lists the orders with the order number, the candidate's email, the plan,
+  the amount, the method, the reference and the status, and offers
+  Approve and Reject on the ones that are waiting. A note can be attached
+  to the decision. The approval is idempotent, so pressing the button
+  twice gives one subscription and not two.
+- **The deployment decides what is on offer.** `PaymentGatewayRegistry`
+  holds every gateway and decides which of them the deployment offers, so
+  `PAYMENTS_MODE` can now be `both` and the candidate chooses at the
+  checkout. The order records the method it was made with, and the two
+  methods are settled by different paths: the test gateway will not settle
+  a UPI order, and the UPI order can only be settled by an administrator.
+  See `DECISIONS.md` D25.
+- **The order says whose it is.** `AdminOrderResponse` now carries the
+  candidate's email and the plan's name, so the administrator can match a
+  payment against the right account without opening the database.
+
+**The bugs it turned up**
+
+- **The `Plan` type did not match the server.** The interface called the
+  plan's length `periodDays` and the server calls it `durationDays`, with
+  an `interval` besides — so the yearly plan was labelled "a month". The
+  field is corrected, and the pricing page now reads the interval the
+  server sends, so the terms are right.
+
+**The tests**
+
+- **7 backend tests** for the two methods on offer — the method on the
+  order, the manual order refusing the test gateway, an unknown method
+  being refused, the administrator seeing the email and the plan, the
+  candidate seeing the plan, and the idempotency key.
+- **13 interface tests** — 7 for the checkout and 6 for the
+  administrator's orders.
+- **The end-to-end suite drives both flows in one deployment.** The
+  upgrade test pays with the test method and checks that the Pro access
+  is on; it then pays by UPI, gives a reference, signs in as the
+  administrator, finds the order by the candidate's email and approves it.
+
+160 backend tests pass, 597 interface tests pass, the lint and the type
+check are clean, the interface builds, and the fourteen end-to-end tests
+pass.

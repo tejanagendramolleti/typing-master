@@ -4,13 +4,16 @@ import { useQuery } from '@tanstack/react-query'
 import { Badge, Banner, Card, LoadingState, PageHeader } from '../../components/ui'
 import { get, post } from '../../lib/api'
 import { useAuth } from '../../lib/useAuth'
-import type { PlanCatalogue } from '../../lib/types'
+import type { PlanCatalogue, Plan } from '../../lib/types'
+import CheckoutPanel from './CheckoutPanel'
+import { formatPrice } from '../../lib/formatPrice'
 
-/** Formats a price in paise as rupees. */
-function formatPrice(paise: number, currency: string): string {
-  const amount = paise / 100
-  const symbol = currency === 'INR' ? '₹' : currency === 'USD' ? '$' : ''
-  return `${symbol}${amount % 1 === 0 ? amount.toFixed(0) : amount.toFixed(2)}`
+/** How long a plan runs for, in words. */
+function periodLabel(plan: Plan): string {
+  if (plan.interval === 'FREE') return 'free'
+  if (plan.interval === 'YEARLY' || plan.durationDays >= 365) return 'a year'
+  if (plan.interval === 'QUARTERLY' || plan.durationDays >= 90) return 'a quarter'
+  return 'a month'
 }
 
 /**
@@ -25,6 +28,7 @@ export default function PricingPage() {
   const [waitlistSent, setWaitlistSent] = useState(false)
   const [waitlistError, setWaitlistError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [chosen, setChosen] = useState<Plan | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['plans'],
@@ -47,8 +51,11 @@ export default function PricingPage() {
 
   if (isLoading) return <LoadingState label="Loading the plans" />
 
-  const plans = data?.plans ?? []
+  // The free plan is not on sale, so it is not in the grid. It has a card
+  // of its own further down the page.
+  const plans = (data?.plans ?? []).filter((plan) => plan.interval !== 'FREE' && plan.pricePaise > 0)
   const paymentsEnabled = data?.paymentsEnabled ?? false
+  const methods = data?.methods ?? []
 
   return (
     <div className="container-page py-12">
@@ -77,6 +84,14 @@ export default function PricingPage() {
         </div>
       )}
 
+      {chosen && (
+        <CheckoutPanel
+          plan={chosen}
+          methods={methods}
+          onClose={() => setChosen(null)}
+        />
+      )}
+
       <div className="grid gap-5 lg:grid-cols-3">
         {plans.map((plan) => (
           <Card
@@ -95,13 +110,7 @@ export default function PricingPage() {
                 {formatPrice(plan.pricePaise, plan.currency)}
               </span>
               <span className="text-sm text-ink-500 dark:text-ink-400">
-                {plan.durationDays === 365
-                  ? 'a year'
-                  : plan.durationDays === 90
-                    ? 'a quarter'
-                    : plan.durationDays === 0
-                      ? 'always free'
-                      : 'a month'}
+                {periodLabel(plan)}
               </span>
             </div>
 
@@ -127,8 +136,13 @@ export default function PricingPage() {
 
             <div className="mt-6">
               {paymentsEnabled ? (
-                <button type="button" className="btn-primary w-full">
-                  {plan.highlighted ? 'Choose this plan' : 'Choose this plan'}
+                <button
+                  type="button"
+                  className="btn-primary w-full"
+                  data-plan={plan.code}
+                  onClick={() => setChosen(plan)}
+                >
+                  Choose this plan
                 </button>
               ) : (
                 <button type="button" disabled className="btn-secondary w-full">

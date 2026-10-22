@@ -7,7 +7,6 @@ import com.examtyper.billing.dto.WebhookResult;
 import com.examtyper.common.config.AppProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -23,9 +22,12 @@ import java.util.UUID;
  * {@code app.env}, not on the gateway being selected, so a production
  * deployment that is left in mock mode refuses to take a payment rather
  * than giving one away.
+ *
+ * <p>Which gateways a deployment offers is decided by
+ * {@link PaymentGatewayRegistry}, so this one is registered whatever the
+ * mode says and simply left out when it is not wanted.
  */
 @Component
-@ConditionalOnProperty(name = "app.payments.mode", havingValue = "mock", matchIfMissing = true)
 public class MockPaymentGateway implements PaymentGateway {
 
     private static final Logger log = LoggerFactory.getLogger(MockPaymentGateway.class);

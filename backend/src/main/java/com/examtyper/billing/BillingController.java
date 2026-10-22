@@ -45,13 +45,16 @@ public class BillingController {
     private final BillingService billingService;
     private final SubscriptionService subscriptionService;
     private final AppProperties appProperties;
+    private final PaymentGatewayRegistry gateways;
 
     public BillingController(BillingService billingService,
                              SubscriptionService subscriptionService,
-                             AppProperties appProperties) {
+                             AppProperties appProperties,
+                             PaymentGatewayRegistry gateways) {
         this.billingService = billingService;
         this.subscriptionService = subscriptionService;
         this.appProperties = appProperties;
+        this.gateways = gateways;
     }
 
     @GetMapping("/plans")
@@ -61,8 +64,11 @@ public class BillingController {
                 .map(PlanResponse::from)
                 .toList();
         String mode = appProperties.getPayments().getMode();
-        boolean enabled = !"disabled".equalsIgnoreCase(mode);
-        return ResponseEntity.ok(new PlanCatalogueResponse(plans, enabled, mode));
+        return ResponseEntity.ok(new PlanCatalogueResponse(
+                plans,
+                gateways.isEnabled(),
+                mode,
+                gateways.availableMethods()));
     }
 
     @PostMapping("/billing/orders")
@@ -72,15 +78,16 @@ public class BillingController {
                 CurrentUser.requireId(),
                 request.planCode(),
                 request.couponCode(),
-                request.idempotencyKey());
-        return ResponseEntity.status(201).body(OrderResponse.from(order));
+                request.idempotencyKey(),
+                request.paymentMethod());
+        return ResponseEntity.status(201).body(billingService.toResponse(order));
     }
 
     @GetMapping("/billing/orders")
     @Operation(summary = "The candidate's orders")
     public ResponseEntity<List<OrderResponse>> orders() {
         List<OrderResponse> orders = billingService.listOrders(CurrentUser.requireId()).stream()
-                .map(OrderResponse::from)
+                .map(billingService::toResponse)
                 .toList();
         return ResponseEntity.ok(orders);
     }
@@ -89,7 +96,7 @@ public class BillingController {
     @Operation(summary = "One of the candidate's orders")
     public ResponseEntity<OrderResponse> order(@PathVariable Long orderId) {
         Order order = billingService.findOrder(CurrentUser.requireId(), orderId);
-        return ResponseEntity.ok(OrderResponse.from(order));
+        return ResponseEntity.ok(billingService.toResponse(order));
     }
 
     @PostMapping("/billing/orders/{orderId}/pay")
@@ -106,7 +113,7 @@ public class BillingController {
             @Valid @RequestBody ManualReferenceRequest request) {
         Order order = billingService.submitManualReference(
                 orderId, CurrentUser.requireId(), request.manualRef(), request.note());
-        return ResponseEntity.ok(OrderResponse.from(order));
+        return ResponseEntity.ok(billingService.toResponse(order));
     }
 
     @GetMapping("/billing/subscription")

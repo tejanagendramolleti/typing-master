@@ -161,6 +161,12 @@ On-screen overlay renders the layout and highlights the expected next key.
 - [x] The end-to-end suite starts the whole application itself
 - [x] `scripts/verify.sh` runs on a machine with no `JAVA_HOME` set
 
+### Phase 12 — The billing front end
+- [x] A candidate can pay at the checkout, choosing the method on offer (DECISIONS.md D25)
+- [x] A candidate can pay by UPI and give the transaction reference
+- [x] The administrator can see the orders and approve or reject one
+- [x] The order carries the candidate's email and the plan's name
+- [x] Both payment flows run end to end in one deployment
 
 ## 6. Definition of Done (from brief §9)
 

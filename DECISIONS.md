@@ -349,6 +349,32 @@ at all, because the variable name is not checked against the endpoint it
 belongs to. The defaults are in the code, so the safe setting is the one
 that happens when the variable is missing.
 
+## D25 — The candidate chooses the payment method, and a deployment can offer both
+
+**Decision.** `PAYMENTS_MODE` has a fourth value, `both`. In that mode the
+pricing page shows the methods that are on offer, and the candidate picks
+one at the checkout: the development gateway, or the UPI method that waits
+for an administrator. The method is part of the order, so an order made
+with the UPI method can only be settled by an administrator and an order
+made with the test gateway can only be settled by the test gateway.
+
+**Why.** Which methods a deployment offers is a deployment decision, but
+*which one a particular candidate uses* is the candidate's. A build with
+both methods on offer is also the only way to exercise both flows in one
+end-to-end run, and both flows are part of the product: the UPI method is
+the one an Indian candidate would actually use.
+
+**How it is built.** Every gateway is registered as a bean whatever the
+mode says, and a small registry decides which of them are on offer. The
+wiring therefore never depends on the configuration, and a deployment that
+switches from one method to another does not change which beans exist.
+The three earlier modes behave exactly as they did.
+
+**What it costs.** The order now carries the method it was made with, and
+the two methods are settled by different paths. The approval is still
+idempotent, so an administrator who presses the button twice gives one
+subscription and not two.
+
 ## D26 — The demonstration accounts are seeded by the application
 
 **Decision.** The three demonstration accounts — an administrator, a free

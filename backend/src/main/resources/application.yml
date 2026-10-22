@@ -124,7 +124,13 @@ app:
     mode: ${MAIL_MODE:console}
     from: ${MAIL_FROM:no-reply@examtyper.local}
   payments:
-    mode: ${PAYMENTS_MODE:mock}          # mock | manual | disabled
+    # mock    — the development gateway only, which takes the money without
+    #            any money changing hands
+    # manual  — the UPI method only, where an administrator approves the
+    #            payment
+    # both    — both of them, and the candidate chooses at the checkout
+    # disabled — neither, and the pricing page shows a waitlist form
+    mode: ${PAYMENTS_MODE:mock}
   ai:
     enabled: ${AI_ENABLED:false}
   seed:

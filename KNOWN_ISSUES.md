@@ -205,3 +205,48 @@ live before this change contains results that the current rules would not
 produce. Every attempt taken after the change is marked against the floor
 the exam asked for.
 
+
+---
+
+## 11. The UPI method needs a person, and only a person
+
+**Status.** Shipped, and it works the way a manual approval is supposed to.
+
+**What it means.** An order paid by the UPI method stays in
+`AWAITING_REVIEW` until an administrator approves it. Nothing settles it
+by itself, and no callback from a bank or a provider will arrive and
+settle it, because there is no provider on the other end. A candidate who
+pays at eleven at night waits until an administrator is awake.
+
+**Why it is acceptable here.** It is the honest version of a manual
+payment, and it is the flow an Indian candidate would recognise: a
+reference is given, a person checks it, the access is turned on. The
+alternative in this build would be a provider, and the brief rules one
+out.
+
+**What it costs.** The administrator's order list is the only place the
+payment can be settled, so a deployment with nobody watching that list
+will leave orders waiting. The list is a tab in the admin panel, and the
+end-to-end suite drives it end to end, so it is not a screen that has
+never been run.
+
+---
+
+## 12. The checkout offers what the deployment offers, and no more
+
+**Status.** Shipped.
+
+**What it means.** `PAYMENTS_MODE` decides which methods exist. In
+`mock` the candidate sees only the test method; in `manual` only the UPI
+method; in `both` the candidate chooses; in `disabled` there is no
+checkout at all and the pricing page shows a waitlist form. The two
+methods are settled by different paths, so an order made with the test
+method cannot be settled by an administrator and an order made by UPI
+cannot be settled by the test gateway. That is deliberate — the order
+records what the candidate chose, and it is settled that way.
+
+**Why it matters.** A deployment cannot offer a method it has no gateway
+for, and a candidate cannot reach a method the deployment has switched
+off. `PaymentGatewayRegistry` is the one place that decides, and every
+gateway stays registered whatever the mode says, so switching the mode
+never changes the wiring.

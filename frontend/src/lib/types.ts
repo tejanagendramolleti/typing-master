@@ -180,6 +180,46 @@ export interface PlanCatalogue {
   plans: Plan[]
   paymentsEnabled: boolean
   mode: string
+  /** The payment methods on offer: MOCK, MANUAL, or both. */
+  methods: string[]
+}
+
+/** An order: what the candidate has asked to buy, and what has happened to it. */
+export interface Order {
+  id: number
+  orderNumber: string
+  planCode: string | null
+  planName: string | null
+  provider: string
+  status: string
+  amountPaise: number
+  discountPaise: number
+  totalPaise: number
+  currency: string
+  manualRef: string | null
+  adminNote: string | null
+  createdAt: string
+  expiresAt: string
+}
+
+/** The administrator's view of an order. */
+export interface AdminOrder {
+  id: number
+  orderNumber: string
+  userId: number
+  userEmail: string | null
+  planName: string | null
+  provider: string
+  status: string
+  amountPaise: number
+  discountPaise: number
+  totalPaise: number
+  currency: string
+  manualRef: string | null
+  manualNote: string | null
+  adminNote: string | null
+  createdAt: string
+  reviewedAt: string | null
 }
 
 /** A page of results, as the server sends them. */
@@ -189,4 +229,14 @@ export interface Page<T> {
   totalPages: number
   number: number
   size: number
+}
+
+/** A subscription: the period the candidate has paid for. */
+export interface Subscription {
+  id: number
+  provider: string
+  status: string
+  startsAt: string
+  expiresAt: string
+  autoRenew: boolean
 }

@@ -261,7 +261,7 @@ public class AppProperties {
     }
 
     public static class Payments {
-        /** mock | manual | disabled */
+        /** mock | manual | both | disabled */
         private String mode = "mock";
 
         public String getMode() {
