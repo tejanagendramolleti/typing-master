@@ -1,0 +1,10 @@
+{
+  "name": "Typing Test — Free Online Typing Speed Test",
+  "short_name": "Typing Test",
+  "description": "Free 1, 2 and 3 minute online typing tests with instant WPM and accuracy.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05070f",
+  "theme_color": "#05070f",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

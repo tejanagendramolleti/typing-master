@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Replace typingtest.example with the real domain after deploying.
+Sitemap: https://typingtest.example/sitemap.xml

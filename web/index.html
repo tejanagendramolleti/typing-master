@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05070f" />
+
+    <!--
+      SEO: replace https://typingtest.example with the real domain before
+      deploying. Everything else (OG, canonical, sitemap, JSON-LD) keys off it.
+    -->
+    <title>Typing Test — Free Online Typing Speed Test (1, 2 &amp; 3 Minute Tests)</title>
+    <meta
+      name="description"
+      content="Take a free online typing test. 1 minute, 2 minute and 3 minute typing tests with instant WPM and accuracy. No sign-up, no download — practice typing and track your best scores."
+    />
+    <meta
+      name="keywords"
+      content="typing test, typing speed test, wpm test, free typing test online, 1 minute typing test, 2 minute typing test, 3 minute typing test, typing practice"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Typing Test" />
+    <link rel="canonical" href="https://typingtest.example/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Typing Test" />
+    <meta property="og:title" content="Typing Test — Free Online Typing Speed Test" />
+    <meta
+      property="og:description"
+      content="Free 1, 2 and 3 minute typing tests with instant WPM and accuracy. No sign-up needed."
+    />
+    <meta property="og:url" content="https://typingtest.example/" />
+    <meta property="og:image" content="https://typingtest.example/og-cover.png" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Typing Test — Free Online Typing Speed Test" />
+    <meta
+      name="twitter:description"
+      content="Free 1, 2 and 3 minute typing tests with instant WPM and accuracy. No sign-up needed."
+    />
+    <meta name="twitter:image" content="https://typingtest.example/og-cover.png" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--
+      AdSense (v2): paste the AdSense verification/script tag here when
+      enabling ads. Deliberately empty in v1 — no ads are loaded.
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXX" crossorigin="anonymous"></script>
+    -->
+
+    <!-- Structured data: the app + the FAQ (both help search appearance). -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Typing Test",
+        "url": "https://typingtest.example/",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "description": "Free online typing speed test with 1, 2 and 3 minute tests, instant WPM and accuracy."
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is typing speed (WPM) calculated?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Words per minute is calculated as (all typed characters / 5) divided by minutes. Net WPM counts only correct characters."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is a good typing speed?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Around 40 WPM is average. Above 60 WPM is good, and above 80 WPM is fast. Accuracy above 95% matters more than raw speed."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need an account to take the typing test?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The test runs entirely in your browser with no sign-up. Your best scores are stored on your own device."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p style="font-family: sans-serif; padding: 2rem; text-align: center">
+        Typing Test needs JavaScript to run the typing engine. Please enable JavaScript and reload.
+      </p>
+    </noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
