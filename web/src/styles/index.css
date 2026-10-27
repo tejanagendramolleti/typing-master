@@ -119,6 +119,32 @@
     animation: char-pop 120ms ease-out;
   }
 
+  /*
+   * Words group the character spans. The active word (the one under the
+   * cursor) gets a soft neon underline so the eye always knows where to
+   * look next — this plus the caret is what makes the stream feel alive.
+   */
+  .tw-word {
+    @apply rounded-md border-b-2 border-transparent px-[1px] transition-[background-color,border-color,box-shadow] duration-150 ease-out;
+  }
+
+  .tw-word-active {
+    border-bottom-color: rgba(34, 211, 238, 0.55);
+    background-color: rgba(34, 211, 238, 0.07);
+    box-shadow: 0 10px 28px -14px rgba(34, 211, 238, 0.5);
+  }
+
+  /* Unfocused stream: blurred until the user clicks in, like the big apps. */
+  .tw-blurred {
+    filter: blur(7px);
+    opacity: 0.55;
+    user-select: none;
+  }
+
+  .tw-focus-hint {
+    @apply absolute left-1/2 top-1/2 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-neon-400/40 bg-void-950/85 px-4 py-2 font-sans text-sm font-medium text-neon-300 shadow-glow backdrop-blur;
+  }
+
   /* ---- Text ---- */
 
   .text-glow {

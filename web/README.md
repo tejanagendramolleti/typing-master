@@ -7,9 +7,9 @@ Scores persist in `localStorage` on the user's own device.
 
 - **Tests:** 30s, 1 min, 2 min, 3 min, 5 min × 5 scenarios
   (Everyday, Exam, Code, Punctuation+, Quotes)
-- **Engine:** hidden-textarea capture (works with mobile keyboards),
-  per-character animated stream, glowing caret, smooth auto-scroll,
-  100ms HUD ticker, paste blocked for honest scores
+- **Feel:** word-grouped stream with visible spacing, glowing active word,
+  focus blur with click-to-focus, synthesized keystroke sounds (mutable,
+  persisted per device), live WPM + accuracy HUD, paste blocked
 - **Results:** net/gross WPM, accuracy, character split, rank titles,
   personal-best detection, copy-to-share, per-device history
 - **SEO:** keyword title/description, canonical, Open Graph + Twitter cards,
