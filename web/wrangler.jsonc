@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "typing-master",
+  "compatibility_date": "2026-10-23",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "./dist",
+    // Serves index.html for unknown routes — the SPA fallback.
+    // (This is also why public/_redirects has no catch-all rule.)
+    "not_found_handling": "single-page-application"
+  }
+}

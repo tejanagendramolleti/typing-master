@@ -1,4 +1,9 @@
-# Cloudflare Pages: SPA fallback — serve index.html for client-side routes.
+# Cloudflare Workers Static Assets SPA fallback.
+#
+# NOTE: no catch-all (`/*`) rule here on purpose. The worker config
+# (wrangler.jsonc) already sets assets.not_found_handling to
+# "single-page-application", which serves index.html for every unknown
+# route. A catch-all _redirects rule on top of that is rejected as an
+# infinite loop (Cloudflare error 100324).
 /guide  /index.html  200
 /about  /index.html  200
-/*      /index.html  200

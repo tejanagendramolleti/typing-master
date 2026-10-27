@@ -39,7 +39,7 @@ npm run dev     # http://localhost:5173
 npm run build   # outputs static files to web/dist
 ```
 
-## Deploy to Cloudflare Pages (free)
+## Deploy to Cloudflare (free, Worker with static assets)
 
 **Option A — Git (recommended, auto-deploys every push):**
 
@@ -54,14 +54,19 @@ npm run build   # outputs static files to web/dist
 4. Deploy. Attach your custom domain under **Custom domains**,
    then re-do the domain search-replace above and redeploy.
 
-**Option B — Direct upload (no git):**
+**Option B — Terminal with Wrangler (quick, no git needed):**
 
 ```powershell
 cd web
-npm install
-npm run build
-npx wrangler pages deploy dist --project-name typing-test
+npx wrangler login    # one time — opens the browser to authorize
+npm run deploy        # builds (tsc + vite) and deploys to the same worker
 ```
+
+`wrangler.jsonc` in this folder pins the worker name (`typing-master`) and
+the SPA fallback, so terminal deploys and dashboard git deploys land on the
+same URL. Never add a `/*` catch-all to `public/_redirects` — Workers Static
+Assets rejects it as a redirect loop (error 100324); the SPA fallback in
+`wrangler.jsonc` already covers all routes.
 
 ## v2 (ads) plan — do NOT do this in v1
 
