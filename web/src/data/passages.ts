@@ -60,17 +60,31 @@ const PASSAGES: Record<ScenarioId, string[]> = {
   ],
 }
 
+/** Fisher–Yates shuffle — a fresh copy, the source order never changes. */
+function shuffled<T>(items: T[]): T[] {
+  const copy = [...items]
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+
 /**
  * Builds a reference text long enough for the chosen duration.
  * Assumes ~70 WPM (350 chars/min) plus headroom so fast typists never run dry.
+ *
+ * The passages are shuffled and started at a random offset on every call,
+ * so two tests with the same scenario almost never read the same.
  */
 export function buildText(scenario: ScenarioId, durationSeconds: number): string {
   const needed = Math.ceil((durationSeconds / 60) * 350 * 1.6)
-  const parts = PASSAGES[scenario]
+  const parts = shuffled(PASSAGES[scenario])
+  const startAt = Math.floor(Math.random() * parts.length)
   let text = ''
   let i = 0
   while (text.length < needed) {
-    text += (text ? ' ' : '') + parts[i % parts.length]
+    text += (text ? ' ' : '') + parts[(startAt + i) % parts.length]
     i += 1
   }
   return text

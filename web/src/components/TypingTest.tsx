@@ -42,16 +42,19 @@ export function TypingTest({ initialScenario = 'everyday', initialDuration = 60,
   const [phase, setPhase] = useState<Phase>('ready')
   const [typed, setTyped] = useState('')
   const [isFocused, setIsFocused] = useState(false)
+  /** Bumped on every reset so the reference text reshuffles each run. */
+  const [textNonce, setTextNonce] = useState(0)
   const { enabled: soundOn, toggle: toggleSound, playHit, playMiss } = useKeySounds()
 
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const startRef = useRef(0)
   const [now, setNow] = useState(0)
 
-  const reference = useMemo(
-    () => buildText(scenario, durationSeconds),
-    [scenario, durationSeconds],
-  )
+  const reference = useMemo(() => {
+    // Reading textNonce makes it a real dependency: every reset reshuffles.
+    void textNonce
+    return buildText(scenario, durationSeconds)
+  }, [scenario, durationSeconds, textNonce])
 
   const elapsed = phase === 'running' ? (now - startRef.current) / 1000 : 0
   const remaining = Math.max(0, durationSeconds - elapsed)
@@ -77,6 +80,7 @@ export function TypingTest({ initialScenario = 'everyday', initialDuration = 60,
       setDurationSeconds(nextDuration)
       setPhase('ready')
       setTyped('')
+      setTextNonce((n) => n + 1)
       startRef.current = 0
       setNow(0)
       requestAnimationFrame(() => inputRef.current?.focus())
